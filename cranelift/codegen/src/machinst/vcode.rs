@@ -20,7 +20,7 @@
 use crate::fx::FxHashMap;
 use crate::fx::FxHashSet;
 use crate::ir::{
-    self, types, Constant, ConstantData, DynamicStackSlot, LabelValueLoc, SourceLoc, ValueLabel,
+    self, types, Constant, ConstantData, DynamicStackSlot, SourceLoc, ValueLabel,
 };
 use crate::machinst::*;
 use crate::timing;
@@ -1079,7 +1079,7 @@ impl<I: VCodeInst> VCode<I> {
             }
 
             let loc = if let Some(preg) = alloc.as_reg() {
-                LabelValueLoc::Reg(Reg::from(preg))
+                Reg::from(preg)
             } else {
                 // We can't translate spillslot locations at the
                 // moment because ValueLabelLoc requires an

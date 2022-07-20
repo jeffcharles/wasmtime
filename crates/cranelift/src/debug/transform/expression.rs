@@ -1,11 +1,11 @@
 use super::address_transform::AddressTransform;
 use crate::debug::ModuleMemoryOffset;
 use anyhow::{Context, Error, Result};
-use cranelift_codegen::ir::{LabelValueLoc, StackSlots, ValueLabel};
+use cranelift_codegen::ir::{Reg, StackSlots, ValueLabel};
 use cranelift_codegen::isa::TargetIsa;
 use cranelift_codegen::ValueLabelsRanges;
 use cranelift_wasm::get_vmctx_value_label;
-use gimli::{self, write, Expression, Operation, Reader, ReaderOffset, X86_64};
+use gimli::{self, write, Expression, Operation, Reader, ReaderOffset};
 use more_asserts::{assert_le, assert_lt};
 use std::cmp::PartialEq;
 use std::collections::{HashMap, HashSet};
@@ -130,69 +130,40 @@ impl CompiledExpression {
 }
 
 fn translate_loc(
-    loc: LabelValueLoc,
+    loc: Reg,
     isa: &dyn TargetIsa,
     add_stack_value: bool,
 ) -> Result<Option<Vec<u8>>> {
-    Ok(match loc {
-        LabelValueLoc::Reg(r) => {
-            let machine_reg = isa.map_regalloc_reg_to_dwarf(r)?;
-            let mut writer = ExpressionWriter::new();
-            if add_stack_value {
-                writer.write_op_reg(machine_reg)?;
-            } else {
-                writer.write_op_breg(machine_reg)?;
-                writer.write_sleb128(0)?;
-            }
-            Some(writer.into_vec())
+    Ok({
+        let machine_reg = isa.map_regalloc_reg_to_dwarf(loc)?;
+        let mut writer = ExpressionWriter::new();
+        if add_stack_value {
+            writer.write_op_reg(machine_reg)?;
+        } else {
+            writer.write_op_breg(machine_reg)?;
+            writer.write_sleb128(0)?;
         }
-        LabelValueLoc::SPOffset(off) => {
-            let mut writer = ExpressionWriter::new();
-            writer.write_op_breg(X86_64::RSP.0)?;
-            writer.write_sleb128(off)?;
-            if !add_stack_value {
-                writer.write_op(gimli::constants::DW_OP_deref)?;
-            }
-            return Ok(Some(writer.into_vec()));
-        }
+        Some(writer.into_vec())
     })
 }
 
 fn append_memory_deref(
     buf: &mut Vec<u8>,
     frame_info: &FunctionFrameInfo,
-    vmctx_loc: LabelValueLoc,
+    vmctx_loc: Reg,
     isa: &dyn TargetIsa,
 ) -> Result<bool> {
     let mut writer = ExpressionWriter::new();
     // FIXME for imported memory
-    match vmctx_loc {
-        LabelValueLoc::Reg(r) => {
-            let reg = isa.map_regalloc_reg_to_dwarf(r)?;
-            writer.write_op_breg(reg)?;
-            let memory_offset = match frame_info.vmctx_memory_offset() {
-                Some(offset) => offset,
-                None => {
-                    return Ok(false);
-                }
-            };
-            writer.write_sleb128(memory_offset)?;
+    let reg = isa.map_regalloc_reg_to_dwarf(vmctx_loc)?;
+    writer.write_op_breg(reg)?;
+    let memory_offset = match frame_info.vmctx_memory_offset() {
+        Some(offset) => offset,
+        None => {
+            return Ok(false);
         }
-        LabelValueLoc::SPOffset(off) => {
-            writer.write_op_breg(X86_64::RSP.0)?;
-            writer.write_sleb128(off)?;
-            writer.write_op(gimli::constants::DW_OP_deref)?;
-            writer.write_op(gimli::constants::DW_OP_consts)?;
-            let memory_offset = match frame_info.vmctx_memory_offset() {
-                Some(offset) => offset,
-                None => {
-                    return Ok(false);
-                }
-            };
-            writer.write_sleb128(memory_offset)?;
-            writer.write_op(gimli::constants::DW_OP_plus)?;
-        }
-    }
+    };
+    writer.write_sleb128(memory_offset)?;
     writer.write_op(gimli::constants::DW_OP_deref)?;
     writer.write_op(gimli::constants::DW_OP_swap)?;
     writer.write_op(gimli::constants::DW_OP_const4u)?;
@@ -632,7 +603,7 @@ struct CachedValueLabelRange {
     func_index: DefinedFuncIndex,
     start: usize,
     end: usize,
-    label_location: HashMap<ValueLabel, LabelValueLoc>,
+    label_location: HashMap<ValueLabel, Reg>,
 }
 
 struct ValueLabelRangesBuilder<'a, 'b> {

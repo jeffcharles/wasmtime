@@ -61,7 +61,7 @@ pub use crate::ir::stackslot::{
 pub use crate::ir::table::TableData;
 pub use crate::ir::trapcode::TrapCode;
 pub use crate::ir::types::Type;
-pub use crate::value_label::LabelValueLoc;
+pub use crate::value_label::Reg;
 
 use crate::entity::{entity_impl, PrimaryMap, SecondaryMap};
 
