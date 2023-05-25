@@ -178,6 +178,22 @@ impl<'a> CodeGenContext<'a> {
         }
     }
 
+    /// Prepares arguments for emitting an i32 relational operation.
+    pub fn i32_relop<F, M>(&mut self, masm: &mut M, emit: &mut F)
+    where
+        F: FnMut(&mut M, Reg, Reg, OperandSize),
+        M: MacroAssembler,
+    {
+        // FIXME we don't need to move everything to registers necessarily
+        let dst = self.any_gpr(masm);
+        let reg1 = self.pop_to_reg(masm, None, OperandSize::S32);
+        let val2 = self.stack.peek().expect("Second value");
+        self.move_val_to_reg(val2, dst, masm, OperandSize::S32);
+        emit(masm, reg1.into(), dst.into(), OperandSize::S32);
+        self.stack.push(Val::reg(reg1));
+        self.stack.push(Val::reg(dst));
+    }
+
     /// Saves any live registers in the value stack in a particular
     /// range defined by the caller.  This is a specialization of the
     /// spill function; made available for cases in which spilling

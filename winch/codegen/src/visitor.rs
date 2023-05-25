@@ -6,7 +6,7 @@
 
 use crate::abi::ABI;
 use crate::codegen::CodeGen;
-use crate::masm::{DivKind, MacroAssembler, OperandSize, RegImm, RemKind};
+use crate::masm::{CmpKind, DivKind, MacroAssembler, OperandSize, RegImm, RemKind};
 use crate::stack::Val;
 use wasmparser::ValType;
 use wasmparser::VisitOperator;
@@ -49,6 +49,7 @@ macro_rules! def_unsupported {
     (emit I32RemS $($rest:tt)*) => {};
     (emit I64Mul $($rest:tt)*) => {};
     (emit I64Sub $($rest:tt)*) => {};
+    (emit I32Eq $($rest:tt)*) => {};
     (emit LocalGet $($rest:tt)*) => {};
     (emit LocalSet $($rest:tt)*) => {};
     (emit Call $($rest:tt)*) => {};
@@ -168,6 +169,13 @@ where
         use RemKind::*;
 
         self.masm.rem(&mut self.context, Unsigned, S64);
+    }
+
+    fn visit_i32_eq(&mut self) -> Self::Output {
+        self.context
+            .i32_binop(self.masm, &mut |masm, src, dst, size| {
+                masm.cmp(dst, dst, src, CmpKind::Eq, size);
+            });
     }
 
     fn visit_end(&mut self) {}

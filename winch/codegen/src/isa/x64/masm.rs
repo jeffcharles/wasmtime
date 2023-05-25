@@ -3,7 +3,7 @@ use super::{
     asm::{Assembler, Operand},
     regs::{self, rbp, rsp},
 };
-use crate::masm::{DivKind, MacroAssembler as Masm, OperandSize, RegImm, RemKind};
+use crate::masm::{CmpKind, DivKind, MacroAssembler as Masm, OperandSize, RegImm, RemKind};
 use crate::{
     abi::{align_to, calculate_frame_adjustment, LocalSlot},
     codegen::CodeGenContext,
@@ -255,6 +255,26 @@ impl Masm for MacroAssembler {
 
     fn address_at_reg(&self, reg: Reg, offset: u32) -> Self::Address {
         Address::offset(reg, offset)
+    }
+
+    fn cmp(&mut self, dst: RegImm, lhs: RegImm, rhs: RegImm, kind: CmpKind, size: OperandSize) {
+        let (src, dst): (Operand, Operand) = if dst == lhs {
+            (rhs.into(), dst.into())
+        } else {
+            panic!(
+                "the destination and first source argument must be the same, dst={:?}, lhs={:?}",
+                dst, lhs
+            );
+        };
+
+        match kind {
+            CmpKind::Eq => self.asm.cmp(src.into(), dst, size),
+            CmpKind::Ne => todo!(),
+            CmpKind::Lt => todo!(),
+            CmpKind::Gt => todo!(),
+            CmpKind::Le => todo!(),
+            CmpKind::Ge => todo!(),
+        }
     }
 }
 

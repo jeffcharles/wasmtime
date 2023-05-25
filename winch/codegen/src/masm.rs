@@ -21,6 +21,22 @@ pub(crate) enum RemKind {
     Unsigned,
 }
 
+/// Comparison kind.
+pub(crate) enum CmpKind {
+    /// Equal.
+    Eq,
+    /// Not equal.
+    Ne,
+    /// Less than.
+    Lt,
+    /// Greater than.
+    Gt,
+    /// Less than or equal.
+    Le,
+    /// Greater than or equal.
+    Ge,
+}
+
 /// Operand size, in bits.
 #[derive(Copy, Debug, Clone, Eq, PartialEq)]
 pub(crate) enum OperandSize {
@@ -162,6 +178,9 @@ pub(crate) trait MacroAssembler {
 
     /// Calculate remainder.
     fn rem(&mut self, context: &mut CodeGenContext, kind: RemKind, size: OperandSize);
+
+    /// Compare two numbers.
+    fn cmp(&mut self, dst: RegImm, lhs: RegImm, rhs: RegImm, kind: CmpKind, size: OperandSize);
 
     /// Push the register to the stack, returning the offset.
     fn push(&mut self, src: Reg) -> u32;

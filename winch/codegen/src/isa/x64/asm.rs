@@ -472,6 +472,38 @@ impl Assembler {
         });
     }
 
+    pub fn cmp(&mut self, src: Operand, dst: Operand, size: OperandSize) {
+        let src = match src {
+            Operand::Reg(r) => GprMemImm::new(r.into()).expect("valid gpr"),
+            Operand::Imm(imm) => match i32::try_from(imm) {
+                Ok(i) => GprMemImm::new(RegMemImm::imm(i as u32)).expect("valid imm"),
+                Err(_) => {
+                    let scratch = regs::scratch();
+                    self.mov_ir(imm as u64, scratch, size);
+                    GprMemImm::new(scratch.into()).expect("valid gpr")
+                }
+            },
+            Operand::Mem(_) => panic!("Unsupported"),
+        };
+        let dst = match dst {
+            Operand::Reg(r) => r,
+            _ => panic!("Unsupported"),
+        };
+
+        // sets flags like `ZF` (zero flag) in status register
+        self.emit(Inst::CmpRmiR {
+            size: size.into(),
+            opcode: CmpOpcode::Cmp,
+            src,
+            dst: dst.into(),
+        });
+        // copy ZF into dest
+        self.emit(Inst::Setcc {
+            cc: CC::Z,
+            dst: dst.into(),
+        });
+    }
+
     pub fn call(&mut self, callee: CalleeKind) {
         match callee {
             CalleeKind::Indirect(reg) => {
