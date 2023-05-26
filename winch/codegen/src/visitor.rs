@@ -173,7 +173,7 @@ where
 
     fn visit_i32_eq(&mut self) -> Self::Output {
         self.context
-            .i32_binop(self.masm, &mut |masm, src, dst, size| {
+            .i32_binop(self.masm, &mut |masm, dst, src, size| {
                 masm.cmp(dst, dst, src, CmpKind::Eq, size);
             });
     }
