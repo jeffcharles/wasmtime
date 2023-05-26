@@ -49,6 +49,7 @@ macro_rules! def_unsupported {
     (emit I64Sub $($rest:tt)*) => {};
     (emit I32Eq $($rest:tt)*) => {};
     (emit I64Eq $($rest:tt)*) => {};
+    (emit I32Ne $($rest:tt)*) => {};
     (emit LocalGet $($rest:tt)*) => {};
     (emit LocalSet $($rest:tt)*) => {};
     (emit Call $($rest:tt)*) => {};
@@ -181,6 +182,13 @@ where
         self.context
             .i64_binop(self.masm, &mut |masm, dst, src, size| {
                 masm.cmp(dst, dst, src, CmpKind::Eq, size);
+            });
+    }
+
+    fn visit_i32_ne(&mut self) {
+        self.context
+            .i32_binop(self.masm, &mut |masm, dst, src, size| {
+                masm.cmp(dst, dst, src, CmpKind::Ne, size);
             });
     }
 

@@ -32,6 +32,14 @@ pub(crate) enum Operand {
     Imm(i64),
 }
 
+/// x64 supported comparisons
+pub(crate) enum CmpKind {
+    /// Zero
+    Z,
+    /// Not zero
+    NZ,
+}
+
 // Conversions between winch-codegen x64 types and cranelift-codegen x64 types.
 
 impl From<Reg> for RegMemImm {
@@ -472,7 +480,8 @@ impl Assembler {
         });
     }
 
-    pub fn cmp(&mut self, src: Operand, dst: Operand, size: OperandSize) {
+    /// Compare two operands and write bit to dst
+    pub fn cmp(&mut self, src: Operand, dst: Operand, kind: CmpKind, size: OperandSize) {
         let src = match src {
             Operand::Reg(r) => GprMemImm::new(r.into()).expect("valid gpr"),
             Operand::Imm(imm) => match i32::try_from(imm) {
@@ -503,9 +512,12 @@ impl Assembler {
             simm64: 0,
             dst: dst.into(),
         });
-        // copy ZF into dst
+        // copy appropriate status register bit into dst
         self.emit(Inst::Setcc {
-            cc: CC::Z,
+            cc: match kind {
+                CmpKind::Z => CC::Z,
+                CmpKind::NZ => CC::NZ,
+            },
             dst: dst.into(),
         });
     }
