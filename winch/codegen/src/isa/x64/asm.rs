@@ -34,10 +34,12 @@ pub(crate) enum Operand {
 
 /// x64 supported comparisons
 pub(crate) enum CmpKind {
-    /// Zero
+    /// Zero.
     Z,
-    /// Not zero
+    /// Not zero.
     NZ,
+    /// <.
+    L,
 }
 
 // Conversions between winch-codegen x64 types and cranelift-codegen x64 types.
@@ -517,6 +519,7 @@ impl Assembler {
             cc: match kind {
                 CmpKind::Z => CC::Z,
                 CmpKind::NZ => CC::NZ,
+                CmpKind::L => CC::L,
             },
             dst: dst.into(),
         });

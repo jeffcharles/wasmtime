@@ -281,10 +281,14 @@ impl Masm for MacroAssembler {
             match kind {
                 MacroCmpKind::Eq => CmpKind::Z,
                 MacroCmpKind::Ne => CmpKind::NZ,
-                MacroCmpKind::Lt => todo!(),
-                MacroCmpKind::Gt => todo!(),
-                MacroCmpKind::Le => todo!(),
-                MacroCmpKind::Ge => todo!(),
+                MacroCmpKind::LtS => CmpKind::L,
+                MacroCmpKind::LtU => todo!(),
+                MacroCmpKind::GtS => todo!(),
+                MacroCmpKind::GtU => todo!(),
+                MacroCmpKind::LeS => todo!(),
+                MacroCmpKind::LeU => todo!(),
+                MacroCmpKind::GeS => todo!(),
+                MacroCmpKind::GeU => todo!(),
             },
             size,
         );

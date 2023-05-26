@@ -28,14 +28,22 @@ pub(crate) enum CmpKind {
     Eq,
     /// Not equal.
     Ne,
-    /// Less than.
-    Lt,
-    /// Greater than.
-    Gt,
-    /// Less than or equal.
-    Le,
-    /// Greater than or equal.
-    Ge,
+    /// Signed less than.
+    LtS,
+    /// Unsigned less than.
+    LtU,
+    /// Signed greater than.
+    GtS,
+    /// Unsigned greater than.
+    GtU,
+    /// Signed less than or equal.
+    LeS,
+    /// Unsigned less than or equal.
+    LeU,
+    /// Signed greater than or equal.
+    GeS,
+    /// Unsigned greater than or equal.
+    GeU,
 }
 
 /// Operand size, in bits.
