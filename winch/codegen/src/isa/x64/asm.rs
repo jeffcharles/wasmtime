@@ -497,7 +497,13 @@ impl Assembler {
             src,
             dst: dst.into(),
         });
-        // copy ZF into dest
+        // clear the dst register or high bytes will still be set
+        self.emit(Inst::Imm {
+            dst_size: size.into(),
+            simm64: 0,
+            dst: dst.into(),
+        });
+        // copy ZF into dst
         self.emit(Inst::Setcc {
             cc: CC::Z,
             dst: dst.into(),

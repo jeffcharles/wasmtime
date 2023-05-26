@@ -13,7 +13,8 @@
 ;;    8:	 4c893424             	mov	qword ptr [rsp], r14
 ;;    c:	 b802000000           	mov	eax, 2
 ;;   11:	 83f803               	cmp	eax, 3
-;;   14:	 400f94c0             	sete	al
-;;   18:	 4883c408             	add	rsp, 8
-;;   1c:	 5d                   	pop	rbp
-;;   1d:	 c3                   	ret	
+;;   14:	 b800000000           	mov	eax, 0
+;;   19:	 400f94c0             	sete	al
+;;   1d:	 4883c408             	add	rsp, 8
+;;   21:	 5d                   	pop	rbp
+;;   22:	 c3                   	ret	

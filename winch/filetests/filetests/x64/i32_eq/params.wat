@@ -16,8 +16,9 @@
 ;;   14:	 8b442408             	mov	eax, dword ptr [rsp + 8]
 ;;   18:	 8b4c240c             	mov	ecx, dword ptr [rsp + 0xc]
 ;;   1c:	 39c1                 	cmp	ecx, eax
-;;   1e:	 400f94c1             	sete	cl
-;;   22:	 4889c8               	mov	rax, rcx
-;;   25:	 4883c410             	add	rsp, 0x10
-;;   29:	 5d                   	pop	rbp
-;;   2a:	 c3                   	ret	
+;;   1e:	 b900000000           	mov	ecx, 0
+;;   23:	 400f94c1             	sete	cl
+;;   27:	 4889c8               	mov	rax, rcx
+;;   2a:	 4883c410             	add	rsp, 0x10
+;;   2e:	 5d                   	pop	rbp
+;;   2f:	 c3                   	ret	
