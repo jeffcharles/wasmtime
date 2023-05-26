@@ -282,7 +282,7 @@ impl Masm for MacroAssembler {
                 MacroCmpKind::Eq => CmpKind::Z,
                 MacroCmpKind::Ne => CmpKind::NZ,
                 MacroCmpKind::LtS => CmpKind::L,
-                MacroCmpKind::LtU => todo!(),
+                MacroCmpKind::LtU => CmpKind::B,
                 MacroCmpKind::GtS => todo!(),
                 MacroCmpKind::GtU => todo!(),
                 MacroCmpKind::LeS => todo!(),

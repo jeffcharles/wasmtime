@@ -30,9 +30,9 @@
 ;;   31:	 488b442408           	mov	rax, qword ptr [rsp + 8]
 ;;   36:	 488b4c2410           	mov	rcx, qword ptr [rsp + 0x10]
 ;;   3b:	 4839c1               	cmp	rcx, rax
-;;   3e:	 48c7c100000000       	mov	rcx, 0
-;;   45:	 400f95c1             	setne	cl
-;;   49:	 4889c8               	mov	rax, rcx
-;;   4c:	 4883c418             	add	rsp, 0x18
-;;   50:	 5d                   	pop	rbp
-;;   51:	 c3                   	ret	
+;;   3e:	 b900000000           	mov	ecx, 0
+;;   43:	 400f95c1             	setne	cl
+;;   47:	 4889c8               	mov	rax, rcx
+;;   4a:	 4883c418             	add	rsp, 0x18
+;;   4e:	 5d                   	pop	rbp
+;;   4f:	 c3                   	ret	

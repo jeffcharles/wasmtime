@@ -38,8 +38,10 @@ pub(crate) enum CmpKind {
     Z,
     /// Not zero.
     NZ,
-    /// <.
+    /// Signed <.
     L,
+    /// Unsigned <.
+    B,
 }
 
 // Conversions between winch-codegen x64 types and cranelift-codegen x64 types.
@@ -510,7 +512,7 @@ impl Assembler {
         });
         // clear the dst register or high bytes will still be set
         self.emit(Inst::Imm {
-            dst_size: size.into(),
+            dst_size: args::OperandSize::Size32, // always going to be a 32-bit result
             simm64: 0,
             dst: dst.into(),
         });
@@ -520,6 +522,7 @@ impl Assembler {
                 CmpKind::Z => CC::Z,
                 CmpKind::NZ => CC::NZ,
                 CmpKind::L => CC::L,
+                CmpKind::B => CC::B,
             },
             dst: dst.into(),
         });

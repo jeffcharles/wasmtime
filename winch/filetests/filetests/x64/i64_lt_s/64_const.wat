@@ -17,8 +17,8 @@
 ;;   16:	 49bbffffffffffffff7f 	
 ;; 				movabs	r11, 0x7fffffffffffffff
 ;;   20:	 4c39d8               	cmp	rax, r11
-;;   23:	 48c7c000000000       	mov	rax, 0
-;;   2a:	 400f9cc0             	setl	al
-;;   2e:	 4883c408             	add	rsp, 8
-;;   32:	 5d                   	pop	rbp
-;;   33:	 c3                   	ret	
+;;   23:	 b800000000           	mov	eax, 0
+;;   28:	 400f9cc0             	setl	al
+;;   2c:	 4883c408             	add	rsp, 8
+;;   30:	 5d                   	pop	rbp
+;;   31:	 c3                   	ret	
