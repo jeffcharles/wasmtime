@@ -63,6 +63,7 @@ macro_rules! def_unsupported {
     (emit I64GtS $($rest:tt)*) => {};
     (emit I32GtU $($rest:tt)*) => {};
     (emit I64GtU $($rest:tt)*) => {};
+    (emit I32GeS $($rest:tt)*) => {};
     (emit LocalGet $($rest:tt)*) => {};
     (emit LocalSet $($rest:tt)*) => {};
     (emit Call $($rest:tt)*) => {};
@@ -293,6 +294,13 @@ where
         self.context
             .i64_binop(self.masm, &mut |masm, dst, src, size| {
                 masm.cmp(dst, dst, src, CmpKind::GtU, size);
+            });
+    }
+
+    fn visit_i32_ge_s(&mut self) {
+        self.context
+            .i32_binop(self.masm, &mut |masm, dst, src, size| {
+                masm.cmp(dst, dst, src, CmpKind::GeS, size);
             });
     }
 
