@@ -56,6 +56,7 @@ macro_rules! def_unsupported {
     (emit I32LtU $($rest:tt)*) => {};
     (emit I64LtU $($rest:tt)*) => {};
     (emit I32LeS $($rest:tt)*) => {};
+    (emit I64LeS $($rest:tt)*) => {};
     (emit LocalGet $($rest:tt)*) => {};
     (emit LocalSet $($rest:tt)*) => {};
     (emit Call $($rest:tt)*) => {};
@@ -219,13 +220,6 @@ where
             });
     }
 
-    fn visit_i32_le_s(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::LeS, size);
-            });
-    }
-
     fn visit_i32_lt_u(&mut self) {
         self.context
             .i32_binop(self.masm, &mut |masm, dst, src, size| {
@@ -238,6 +232,20 @@ where
             .i64_binop(self.masm, &mut |masm, dst, src, size| {
                 masm.cmp(dst, dst, src, CmpKind::LtU, size);
             });
+    }
+
+    fn visit_i32_le_s(&mut self) {
+        self.context
+            .i32_binop(self.masm, &mut |masm, dst, src, size| {
+                masm.cmp(dst, dst, src, CmpKind::LeS, size);
+            });
+    }
+
+    fn visit_i64_le_s(&mut self) {
+        self.context
+            .i64_binop(self.masm, &mut |masm, dst, src, size| {
+                masm.cmp(dst, dst, src, CmpKind::LeS, size);
+            })
     }
 
     fn visit_end(&mut self) {}

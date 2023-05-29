@@ -315,6 +315,7 @@ fn winch_supports_module(module: &[u8]) -> bool {
                         | I32LtU { .. }
                         | I64LtU { .. }
                         | I32LeS { .. }
+                        | I64LeS { .. }
                         | LocalGet { .. }
                         | LocalSet { .. }
                         | Call { .. }
