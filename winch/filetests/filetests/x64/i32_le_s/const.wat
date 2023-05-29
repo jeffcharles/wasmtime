@@ -11,12 +11,10 @@
 ;;    1:	 4889e5               	mov	rbp, rsp
 ;;    4:	 4883ec08             	sub	rsp, 8
 ;;    8:	 4c893424             	mov	qword ptr [rsp], r14
-;;    c:	 48c7c003000000       	mov	rax, 3
-;;   13:	 48c7c102000000       	mov	rcx, 2
-;;   1a:	 4839c1               	cmp	rcx, rax
-;;   1d:	 b900000000           	mov	ecx, 0
-;;   22:	 400f9ec1             	setle	cl
-;;   26:	 4889c8               	mov	rax, rcx
-;;   29:	 4883c408             	add	rsp, 8
-;;   2d:	 5d                   	pop	rbp
-;;   2e:	 c3                   	ret	
+;;    c:	 b802000000           	mov	eax, 2
+;;   11:	 83f803               	cmp	eax, 3
+;;   14:	 b800000000           	mov	eax, 0
+;;   19:	 400f9ec0             	setle	al
+;;   1d:	 4883c408             	add	rsp, 8
+;;   21:	 5d                   	pop	rbp
+;;   22:	 c3                   	ret	

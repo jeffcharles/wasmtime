@@ -27,10 +27,10 @@
 ;;   23:	 89442408             	mov	dword ptr [rsp + 8], eax
 ;;   27:	 8b442408             	mov	eax, dword ptr [rsp + 8]
 ;;   2b:	 8b4c240c             	mov	ecx, dword ptr [rsp + 0xc]
-;;   2f:	 4839c1               	cmp	rcx, rax
-;;   32:	 b900000000           	mov	ecx, 0
-;;   37:	 400f9ec1             	setle	cl
-;;   3b:	 4889c8               	mov	rax, rcx
-;;   3e:	 4883c410             	add	rsp, 0x10
-;;   42:	 5d                   	pop	rbp
-;;   43:	 c3                   	ret	
+;;   2f:	 39c1                 	cmp	ecx, eax
+;;   31:	 b900000000           	mov	ecx, 0
+;;   36:	 400f9ec1             	setle	cl
+;;   3a:	 4889c8               	mov	rax, rcx
+;;   3d:	 4883c410             	add	rsp, 0x10
+;;   41:	 5d                   	pop	rbp
+;;   42:	 c3                   	ret	
