@@ -23,6 +23,7 @@ pub(crate) enum RemKind {
 }
 
 /// Comparison kind.
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum CmpKind {
     /// Equal.
     Eq,

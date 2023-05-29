@@ -189,143 +189,83 @@ where
     }
 
     fn visit_i32_eq(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::Eq, size);
-            });
+        self.cmp_i32(CmpKind::Eq);
     }
 
     fn visit_i64_eq(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::Eq, size);
-            });
+        self.cmp_i64(CmpKind::Eq);
     }
 
     fn visit_i32_ne(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::Ne, size);
-            });
+        self.cmp_i32(CmpKind::Ne);
     }
 
     fn visit_i64_ne(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::Ne, size);
-            });
+        self.cmp_i64(CmpKind::Ne);
     }
 
     fn visit_i32_lt_s(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::LtS, size);
-            });
+        self.cmp_i32(CmpKind::LtS);
     }
 
     fn visit_i64_lt_s(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::LtS, size);
-            });
+        self.cmp_i64(CmpKind::LtS);
     }
 
     fn visit_i32_lt_u(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::LtU, size);
-            });
+        self.cmp_i32(CmpKind::LtU);
     }
 
     fn visit_i64_lt_u(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::LtU, size);
-            });
+        self.cmp_i64(CmpKind::LtU);
     }
 
     fn visit_i32_le_s(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::LeS, size);
-            });
+        self.cmp_i32(CmpKind::LeS);
     }
 
     fn visit_i64_le_s(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::LeS, size);
-            });
+        self.cmp_i64(CmpKind::LeS);
     }
 
     fn visit_i32_le_u(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::LeU, size);
-            });
+        self.cmp_i32(CmpKind::LeU);
     }
 
     fn visit_i64_le_u(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::LeU, size);
-            });
+        self.cmp_i64(CmpKind::LeU);
     }
 
     fn visit_i32_gt_s(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::GtS, size);
-            });
+        self.cmp_i32(CmpKind::GtS);
     }
 
     fn visit_i64_gt_s(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::GtS, size);
-            });
+        self.cmp_i64(CmpKind::GtS);
     }
 
     fn visit_i32_gt_u(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::GtU, size);
-            });
+        self.cmp_i32(CmpKind::GtU);
     }
 
     fn visit_i64_gt_u(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::GtU, size);
-            });
+        self.cmp_i64(CmpKind::GtU);
     }
 
     fn visit_i32_ge_s(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::GeS, size);
-            });
+        self.cmp_i32(CmpKind::GeS);
     }
 
     fn visit_i64_ge_s(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::GeS, size);
-            });
+        self.cmp_i64(CmpKind::GeS);
     }
 
     fn visit_i32_ge_u(&mut self) {
-        self.context
-            .i32_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::GeU, size);
-            });
+        self.cmp_i32(CmpKind::GeU);
     }
 
     fn visit_i64_ge_u(&mut self) {
-        self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
-                masm.cmp(dst, dst, src, CmpKind::GeU, size);
-            });
+        self.cmp_i64(CmpKind::GeU);
     }
 
     fn visit_end(&mut self) {}
@@ -363,6 +303,25 @@ where
     fn visit_nop(&mut self) {}
 
     wasmparser::for_each_operator!(def_unsupported);
+}
+
+impl<'a, M> CodeGen<'a, M>
+where
+    M: MacroAssembler,
+{
+    fn cmp_i32(&mut self, kind: CmpKind) {
+        self.context
+            .i32_binop(self.masm, &mut |masm, dst, src, size| {
+                masm.cmp(dst, dst, src, kind, size);
+            });
+    }
+
+    fn cmp_i64(&mut self, kind: CmpKind) {
+        self.context
+            .i64_binop(self.masm, &mut move |masm, dst, src, size| {
+                masm.cmp(dst, dst, src, kind, size);
+            });
+    }
 }
 
 impl From<WasmType> for OperandSize {
