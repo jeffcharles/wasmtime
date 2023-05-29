@@ -221,7 +221,7 @@ where
 
     fn visit_i32_le_s(&mut self) {
         self.context
-            .i64_binop(self.masm, &mut |masm, dst, src, size| {
+            .i32_binop(self.masm, &mut |masm, dst, src, size| {
                 masm.cmp(dst, dst, src, CmpKind::LeS, size);
             });
     }
