@@ -48,6 +48,8 @@ pub(crate) enum CmpKind {
     BE,
     /// Signed >.
     NLE,
+    /// Unsigned >.
+    NBE,
 }
 
 // Conversions between winch-codegen x64 types and cranelift-codegen x64 types.
@@ -532,6 +534,7 @@ impl Assembler {
                 CmpKind::LE => CC::LE,
                 CmpKind::BE => CC::BE,
                 CmpKind::NLE => CC::NLE,
+                CmpKind::NBE => CC::NBE,
             },
             dst: dst.into(),
         });
