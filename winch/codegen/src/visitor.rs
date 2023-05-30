@@ -189,83 +189,83 @@ where
     }
 
     fn visit_i32_eq(&mut self) {
-        self.cmp_i32(CmpKind::Eq);
+        self.cmp_i32s(CmpKind::Eq);
     }
 
     fn visit_i64_eq(&mut self) {
-        self.cmp_i64(CmpKind::Eq);
+        self.cmp_i64s(CmpKind::Eq);
     }
 
     fn visit_i32_ne(&mut self) {
-        self.cmp_i32(CmpKind::Ne);
+        self.cmp_i32s(CmpKind::Ne);
     }
 
     fn visit_i64_ne(&mut self) {
-        self.cmp_i64(CmpKind::Ne);
+        self.cmp_i64s(CmpKind::Ne);
     }
 
     fn visit_i32_lt_s(&mut self) {
-        self.cmp_i32(CmpKind::LtS);
+        self.cmp_i32s(CmpKind::LtS);
     }
 
     fn visit_i64_lt_s(&mut self) {
-        self.cmp_i64(CmpKind::LtS);
+        self.cmp_i64s(CmpKind::LtS);
     }
 
     fn visit_i32_lt_u(&mut self) {
-        self.cmp_i32(CmpKind::LtU);
+        self.cmp_i32s(CmpKind::LtU);
     }
 
     fn visit_i64_lt_u(&mut self) {
-        self.cmp_i64(CmpKind::LtU);
+        self.cmp_i64s(CmpKind::LtU);
     }
 
     fn visit_i32_le_s(&mut self) {
-        self.cmp_i32(CmpKind::LeS);
+        self.cmp_i32s(CmpKind::LeS);
     }
 
     fn visit_i64_le_s(&mut self) {
-        self.cmp_i64(CmpKind::LeS);
+        self.cmp_i64s(CmpKind::LeS);
     }
 
     fn visit_i32_le_u(&mut self) {
-        self.cmp_i32(CmpKind::LeU);
+        self.cmp_i32s(CmpKind::LeU);
     }
 
     fn visit_i64_le_u(&mut self) {
-        self.cmp_i64(CmpKind::LeU);
+        self.cmp_i64s(CmpKind::LeU);
     }
 
     fn visit_i32_gt_s(&mut self) {
-        self.cmp_i32(CmpKind::GtS);
+        self.cmp_i32s(CmpKind::GtS);
     }
 
     fn visit_i64_gt_s(&mut self) {
-        self.cmp_i64(CmpKind::GtS);
+        self.cmp_i64s(CmpKind::GtS);
     }
 
     fn visit_i32_gt_u(&mut self) {
-        self.cmp_i32(CmpKind::GtU);
+        self.cmp_i32s(CmpKind::GtU);
     }
 
     fn visit_i64_gt_u(&mut self) {
-        self.cmp_i64(CmpKind::GtU);
+        self.cmp_i64s(CmpKind::GtU);
     }
 
     fn visit_i32_ge_s(&mut self) {
-        self.cmp_i32(CmpKind::GeS);
+        self.cmp_i32s(CmpKind::GeS);
     }
 
     fn visit_i64_ge_s(&mut self) {
-        self.cmp_i64(CmpKind::GeS);
+        self.cmp_i64s(CmpKind::GeS);
     }
 
     fn visit_i32_ge_u(&mut self) {
-        self.cmp_i32(CmpKind::GeU);
+        self.cmp_i32s(CmpKind::GeU);
     }
 
     fn visit_i64_ge_u(&mut self) {
-        self.cmp_i64(CmpKind::GeU);
+        self.cmp_i64s(CmpKind::GeU);
     }
 
     fn visit_end(&mut self) {}
@@ -309,14 +309,14 @@ impl<'a, M> CodeGen<'a, M>
 where
     M: MacroAssembler,
 {
-    fn cmp_i32(&mut self, kind: CmpKind) {
+    fn cmp_i32s(&mut self, kind: CmpKind) {
         self.context
             .i32_binop(self.masm, &mut |masm, dst, src, size| {
                 masm.cmp(dst, dst, src, kind, size);
             });
     }
 
-    fn cmp_i64(&mut self, kind: CmpKind) {
+    fn cmp_i64s(&mut self, kind: CmpKind) {
         self.context
             .i64_binop(self.masm, &mut move |masm, dst, src, size| {
                 masm.cmp(dst, dst, src, kind, size);

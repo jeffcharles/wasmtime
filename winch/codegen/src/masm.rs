@@ -190,7 +190,7 @@ pub(crate) trait MacroAssembler {
     /// Calculate remainder.
     fn rem(&mut self, context: &mut CodeGenContext, kind: RemKind, size: OperandSize);
 
-    /// Compare two numbers.
+    /// Compare two numbers and put result in dst.
     fn cmp(&mut self, dst: RegImm, lhs: RegImm, rhs: RegImm, kind: CmpKind, size: OperandSize);
 
     /// Push the register to the stack, returning the offset.

@@ -56,6 +56,23 @@ pub(crate) enum CmpKind {
     NB,
 }
 
+impl From<CmpKind> for CC {
+    fn from(value: CmpKind) -> Self {
+        match value {
+            CmpKind::Z => CC::Z,
+            CmpKind::NZ => CC::NZ,
+            CmpKind::L => CC::L,
+            CmpKind::B => CC::B,
+            CmpKind::LE => CC::LE,
+            CmpKind::BE => CC::BE,
+            CmpKind::NLE => CC::NLE,
+            CmpKind::NBE => CC::NBE,
+            CmpKind::NL => CC::NL,
+            CmpKind::NB => CC::NB,
+        }
+    }
+}
+
 // Conversions between winch-codegen x64 types and cranelift-codegen x64 types.
 
 impl From<Reg> for RegMemImm {
@@ -498,21 +515,22 @@ impl Assembler {
 
     /// Compare two operands and write bit to dst
     pub fn cmp(&mut self, src: Operand, dst: Operand, kind: CmpKind, size: OperandSize) {
-        let src = match src {
-            Operand::Reg(r) => GprMemImm::new(r.into()).expect("valid gpr"),
+        let src = GprMemImm::new(match src {
+            Operand::Reg(r) => r.into(),
             Operand::Imm(imm) => match i32::try_from(imm) {
-                Ok(i) => GprMemImm::new(RegMemImm::imm(i as u32)).expect("valid imm"),
+                Ok(i) => RegMemImm::imm(i as u32),
                 Err(_) => {
                     let scratch = regs::scratch();
                     self.mov_ir(imm as u64, scratch, size);
-                    GprMemImm::new(scratch.into()).expect("valid gpr")
+                    scratch.into()
                 }
             },
-            Operand::Mem(_) => panic!("Unsupported"),
-        };
+            Operand::Mem(_) => panic!("mem operand for src not supported"),
+        })
+        .expect("valid register or immediate");
         let dst = match dst {
             Operand::Reg(r) => r,
-            _ => panic!("Unsupported"),
+            _ => panic!("dst must be a register"),
         };
 
         // sets flags like `ZF` (zero flag) in status register
@@ -522,26 +540,15 @@ impl Assembler {
             src,
             dst: dst.into(),
         });
-        // clear the dst register or high bytes will still be set
+        // clear the dst register or bits 1 to 31 may be incorrectly set
         self.emit(Inst::Imm {
-            dst_size: args::OperandSize::Size32, // always going to be a 32-bit result
+            dst_size: args::OperandSize::Size32, // always going to be an i32 result
             simm64: 0,
             dst: dst.into(),
         });
-        // copy appropriate status register bit into dst
+        // copy appropriate status register bit into dst's 0 bit
         self.emit(Inst::Setcc {
-            cc: match kind {
-                CmpKind::Z => CC::Z,
-                CmpKind::NZ => CC::NZ,
-                CmpKind::L => CC::L,
-                CmpKind::B => CC::B,
-                CmpKind::LE => CC::LE,
-                CmpKind::BE => CC::BE,
-                CmpKind::NLE => CC::NLE,
-                CmpKind::NBE => CC::NBE,
-                CmpKind::NL => CC::NL,
-                CmpKind::NB => CC::NB,
-            },
+            cc: kind.into(),
             dst: dst.into(),
         });
     }
