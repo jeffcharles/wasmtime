@@ -171,6 +171,36 @@ pub(crate) enum ExtendKind {
     I64Extend32S,
 }
 
+/// Kinds of vector extends in WebAssembly. Each MacroAssembler implementation
+/// is responsible for emitting the correct sequence of instructions when
+/// lowering to machine code.
+pub(crate) enum VectorExtendKind {
+    /// Sign extends eight 8 bit integers to eight 16 bit lanes.
+    V128Extend8x8S,
+    /// Zero extends eight 8 bit integers to eight 16 bit lanes.
+    V128Extend8x8U,
+    /// Sign extends four 16 bit integers to four 32 bit lanes.
+    V128Extend16x4S,
+    /// Zero extends four 16 bit integers to four 32 bit lanes.
+    V128Extend16x4U,
+    /// Sign extends two 32 bit integers to two 64 bit lanes.
+    V128Extend32x2S,
+    /// Zero extends two 32 bit integers to two 64 bit lanes.
+    V128Extend32x2U,
+}
+
+/// Kinds of behavior supported by Wasm loads.
+pub(crate) enum LoadKind {
+    /// Do not extend or splat.
+    None,
+    /// Duplicate value into vector lanes.
+    Splat,
+    /// Scalar (non-vector) extend.
+    ScalarExtend(ExtendKind),
+    /// Vector extend.
+    VectorExtend(VectorExtendKind),
+}
+
 /// Operand size, in bits.
 #[derive(Copy, Debug, Clone, Eq, PartialEq)]
 pub(crate) enum OperandSize {
@@ -569,13 +599,7 @@ pub(crate) trait MacroAssembler {
     /// regards to the endianness depending on the target ISA. For this reason,
     /// [Self::wasm_load], should be explicitly used when emitting WebAssembly
     /// loads.
-    fn wasm_load(
-        &mut self,
-        src: Self::Address,
-        dst: Reg,
-        size: OperandSize,
-        kind: Option<ExtendKind>,
-    );
+    fn wasm_load(&mut self, src: Self::Address, dst: Reg, size: OperandSize, kind: LoadKind);
 
     /// Alias for `MacroAssembler::load` with the operand size corresponding
     /// to the pointer size of the target.

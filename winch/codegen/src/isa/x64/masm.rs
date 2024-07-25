@@ -6,8 +6,9 @@ use super::{
 };
 
 use crate::masm::{
-    DivKind, ExtendKind, FloatCmpKind, Imm as I, IntCmpKind, MacroAssembler as Masm, OperandSize,
-    RegImm, RemKind, RoundingMode, ShiftKind, TrapCode, TruncKind, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
+    DivKind, ExtendKind, FloatCmpKind, Imm as I, IntCmpKind, LoadKind, MacroAssembler as Masm,
+    OperandSize, RegImm, RemKind, RoundingMode, ShiftKind, TrapCode, TruncKind, TRUSTED_FLAGS,
+    UNTRUSTED_FLAGS,
 };
 use crate::{
     abi::{self, align_to, calculate_frame_adjustment, LocalSlot},
@@ -256,17 +257,47 @@ impl Masm for MacroAssembler {
         self.load_impl::<Self>(src, dst, size, TRUSTED_FLAGS);
     }
 
-    fn wasm_load(
-        &mut self,
-        src: Self::Address,
-        dst: Reg,
-        size: OperandSize,
-        kind: Option<ExtendKind>,
-    ) {
-        if let Some(ext) = kind {
-            self.asm.movsx_mr(&src, dst, ext, UNTRUSTED_FLAGS);
-        } else {
-            self.load_impl::<Self>(src, dst, size, UNTRUSTED_FLAGS)
+    fn wasm_load(&mut self, src: Self::Address, dst: Reg, size: OperandSize, kind: LoadKind) {
+        match kind {
+            LoadKind::ScalarExtend(ext) => self.asm.movsx_mr(&src, dst, ext, UNTRUSTED_FLAGS),
+            LoadKind::VectorExtend(ext) => self.asm.xmm_pmov_mr(&src, dst, ext, UNTRUSTED_FLAGS),
+            LoadKind::Splat => {
+                if size == OperandSize::S64 {
+                    self.asm
+                        .xmm_mov_mr(&src, dst, OperandSize::S64, UNTRUSTED_FLAGS);
+                    // Results in the first 4 bytes and second 4 bytes being
+                    // swapped and then the swapped bytes being copied.
+                    // [d0, d1, d2, d3, d4, d5, d6, d7, ...] yields
+                    // [d4, d5, d6, d7, d0, d1, d2, d3, d4, d5, d6, d7, d0, d1, d2, d3].
+                    self.asm
+                        .xmm_pshuf_rr(dst, dst, 0b0100_0100, OperandSize::S64);
+                } else if self.flags.has_avx2() {
+                    self.asm
+                        .xmm_vpbroadcast_mr(&src, dst, size, UNTRUSTED_FLAGS);
+                } else {
+                    self.asm
+                        .xmm_mov_mr(&src, dst, OperandSize::S32, UNTRUSTED_FLAGS);
+                    if size == OperandSize::S8 {
+                        // Results in the first byte being copied into the
+                        // second byte.
+                        // [a0, ...] yields [a0, a0, ...].
+                        self.asm.xmm_punpckl_rr(dst, dst);
+                    }
+                    if size == OperandSize::S8 || size == OperandSize::S16 {
+                        // Results in the first two bytes being copied into the
+                        // following 6 bytes.
+                        // [b0, b1, ...] yields
+                        // [b0, b1, b0, b1, b0, b1, b0, b1, ...].
+                        self.asm.xmm_pshuf_rr(dst, dst, 0b0, OperandSize::S16);
+                    }
+                    // Results in the first 8 bytes being copied into the
+                    // following 8 bytes.
+                    // [c0, c1, c2, c3, c4, c5, c6, c7, ...] yields
+                    // [c0, c1, c2, c3, c4, c5, c6, c7, c0, c1, c2, c3, c4, c5, c6, c7].
+                    self.asm.xmm_pshuf_rr(dst, dst, 0b0, OperandSize::S64);
+                }
+            }
+            LoadKind::None => self.load_impl::<Self>(src, dst, size, UNTRUSTED_FLAGS),
         }
     }
 

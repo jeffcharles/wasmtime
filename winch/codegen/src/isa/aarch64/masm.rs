@@ -4,7 +4,7 @@ use crate::{
     codegen::{ptr_type_from_ptr_size, CodeGenContext, FuncEnv},
     isa::reg::Reg,
     masm::{
-        CalleeKind, DivKind, ExtendKind, FloatCmpKind, Imm as I, IntCmpKind,
+        CalleeKind, DivKind, ExtendKind, FloatCmpKind, Imm as I, IntCmpKind, LoadKind,
         MacroAssembler as Masm, OperandSize, RegImm, RemKind, RoundingMode, SPOffset, ShiftKind,
         StackSlot, TrapCode, TruncKind,
     },
@@ -171,7 +171,7 @@ impl Masm for MacroAssembler {
         _src: Self::Address,
         _dst: Reg,
         _size: OperandSize,
-        _kind: Option<ExtendKind>,
+        _kind: LoadKind,
     ) {
         todo!()
     }

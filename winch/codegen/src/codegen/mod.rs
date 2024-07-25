@@ -3,7 +3,7 @@ use crate::{
     codegen::BlockSig,
     isa::reg::Reg,
     masm::{
-        ExtendKind, IntCmpKind, MacroAssembler, OperandSize, RegImm, SPOffset, ShiftKind, TrapCode,
+        IntCmpKind, LoadKind, MacroAssembler, OperandSize, RegImm, SPOffset, ShiftKind, TrapCode,
     },
     stack::TypedReg,
 };
@@ -717,7 +717,7 @@ where
         arg: &MemArg,
         ty: WasmValType,
         size: OperandSize,
-        sextend: Option<ExtendKind>,
+        kind: LoadKind,
     ) {
         if let Some(addr) = self.emit_compute_heap_address(&arg, size) {
             let dst = match ty {
@@ -728,7 +728,7 @@ where
             };
 
             let src = self.masm.address_at_reg(addr, 0);
-            self.masm.wasm_load(src, dst, size, sextend);
+            self.masm.wasm_load(src, dst, size, kind);
             self.context.stack.push(TypedReg::new(ty, dst).into());
             self.context.free_reg(addr);
         }
