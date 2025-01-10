@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use super::{
     abi::X64ABI,
     address::Address,
@@ -1224,13 +1226,27 @@ impl Masm for MacroAssembler {
         //     todo!("Support for shuffle on x64 without AVX512 not yet implemented")
         // }
         if self.flags.has_avx() {
-            self.asm.vpshufb(dst, lhs, lanes);
+            let mut mask1: [u8; 16] = [0; 16];
+            let mut mask2: [u8; 16] = [0; 16];
+            for i in 0..lanes.len() {
+                if lanes[i] > 15 {
+                    mask1[i] = 0;
+                    mask2[i] = 1;
+                } else {
+                    mask1[i] += 1;
+                    mask2[i] += 0;
+                }
+            }
+            let mask1 = self.asm.add_constant(&mask1);
+            let mask2 = self.asm.add_constant(&mask2);
+
+            self.asm.vpshufb_rrm(dst, lhs, &mask1);
             let scratch = regs::scratch_xmm();
-            // FIXME need to only use certain bytes.
-            self.asm.vpshufb(writable!(scratch), rhs, lanes);
+            self.asm.vpshufb_rrm(writable!(scratch), rhs, &mask2);
             self.asm.vpor(dst, dst.to_reg(), scratch);
         } else {
-            todo!("Support for shuffle on x64 without AVX2 not yet implemented")
+            // FIXME change to error
+            todo!("Support for shuffle on x64 without AVX not yet implemented")
         }
     }
 }

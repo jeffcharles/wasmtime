@@ -1,6 +1,6 @@
 ;;! target = "x86_64"
 ;;! test = "winch"
-;;! flags = [ "-Ccranelift-has-avx512vl", "-Ccranelift-has-avx512vbmi" ]
+;;! flags = [ "-Ccranelift-has-avx" ]
 
 (module
     (func (result v128)

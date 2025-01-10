@@ -1413,13 +1413,21 @@ impl Assembler {
         });
     }
 
-    /// Shuffles bytes in `src` according to contents of `imm` and puts
-    /// result in dst.
-    pub fn vpshufb(&mut self, dst: WritableReg, src: Reg, imm: u8) {
+    /// Shuffles bytes in `src` according to contents of `mask` and puts
+    /// result in `dst`.
+    pub fn vpshufb_rrm(&mut self, dst: WritableReg, src: Reg, mask: &Address) {
+        let mask = Self::to_synthetic_amode(
+            mask,
+            &mut self.pool,
+            &mut self.constants,
+            &mut self.buffer,
+            MemFlags::trusted(),
+        );
+
         self.emit(Inst::XmmRmiRVex {
             op: args::AvxOpcode::Vpshufb,
             src1: src.into(),
-            src2: XmmMemImm::unwrap_new(RegMemImm::imm(imm)),
+            src2: XmmMemImm::unwrap_new(RegMemImm::Mem { addr: mask }),
             dst: dst.to_reg().into(),
         });
     }
