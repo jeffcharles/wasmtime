@@ -23,10 +23,10 @@
 ;;       movq    %rsi, (%rsp)
 ;;       movdqu  0x2c(%rip), %xmm0
 ;;       movdqu  0x34(%rip), %xmm1
-;;       vpshufb 0x3b(%rip), %xmm1, %xmm2
-;;       vpshufb 0x42(%rip), %xmm0, %xmm15
-;;       vpor    %xmm2, %xmm15, %xmm2
-;;       movdqa  %xmm2, %xmm0
+;;       vpshufb 0x3b(%rip), %xmm1, %xmm1
+;;       vpshufb 0x42(%rip), %xmm0, %xmm0
+;;       vpor    %xmm0, %xmm1, %xmm1
+;;       movdqa  %xmm1, %xmm0
 ;;       addq    $0x10, %rsp
 ;;       popq    %rbp
 ;;       retq

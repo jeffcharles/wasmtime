@@ -1,5 +1,3 @@
-use std::ops::Index;
-
 use super::{
     abi::X64ABI,
     address::Address,
@@ -1215,35 +1213,22 @@ impl Masm for MacroAssembler {
     }
 
     fn shuffle(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg, lanes: [u8; 16]) {
-        // if self.flags.has_avx512vl() && self.flags.has_avx512vbmi() {
-        //     // Load mask into `dst`.
-        //     let mask_addr = self.asm.add_constant(&lanes);
-        //     self.asm
-        //         .xmm_mov_mr(&mask_addr, dst, OperandSize::S128, MemFlags::trusted());
-
-        //     self.asm.vpermi2b(dst, lhs, rhs);
-        // } else {
-        //     todo!("Support for shuffle on x64 without AVX512 not yet implemented")
-        // }
         if self.flags.has_avx() {
             let mut mask_lhs: [u8; 16] = [0; 16];
             let mut mask_rhs: [u8; 16] = [0; 16];
             for i in 0..lanes.len() {
                 if lanes[i] > 15 {
-                    mask_lhs[i] = 0;
                     mask_rhs[i] = lanes[i] - 16;
                 } else {
-                    mask_lhs[i] += lanes[i];
-                    mask_rhs[i] += 0;
+                    mask_lhs[i] = lanes[i];
                 }
             }
             let mask_lhs = self.asm.add_constant(&mask_lhs);
             let mask_rhs = self.asm.add_constant(&mask_rhs);
 
-            self.asm.vpshufb_rrm(dst, lhs, &mask_lhs);
-            let scratch = regs::scratch_xmm();
-            self.asm.vpshufb_rrm(writable!(scratch), rhs, &mask_rhs);
-            self.asm.vpor(dst, dst.to_reg(), scratch);
+            self.asm.vpshufb_rrm(writable!(lhs), lhs, &mask_lhs);
+            self.asm.vpshufb_rrm(writable!(rhs), rhs, &mask_rhs);
+            self.asm.vpor(dst, lhs, rhs);
         } else {
             // FIXME change to error
             todo!("Support for shuffle on x64 without AVX not yet implemented")
