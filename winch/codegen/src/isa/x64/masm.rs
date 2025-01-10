@@ -1226,23 +1226,23 @@ impl Masm for MacroAssembler {
         //     todo!("Support for shuffle on x64 without AVX512 not yet implemented")
         // }
         if self.flags.has_avx() {
-            let mut mask1: [u8; 16] = [0; 16];
-            let mut mask2: [u8; 16] = [0; 16];
+            let mut mask_lhs: [u8; 16] = [0; 16];
+            let mut mask_rhs: [u8; 16] = [0; 16];
             for i in 0..lanes.len() {
                 if lanes[i] > 15 {
-                    mask1[i] = 0;
-                    mask2[i] = 1;
+                    mask_lhs[i] = 0;
+                    mask_rhs[i] = lanes[i] - 16;
                 } else {
-                    mask1[i] += 1;
-                    mask2[i] += 0;
+                    mask_lhs[i] += lanes[i];
+                    mask_rhs[i] += 0;
                 }
             }
-            let mask1 = self.asm.add_constant(&mask1);
-            let mask2 = self.asm.add_constant(&mask2);
+            let mask_lhs = self.asm.add_constant(&mask_lhs);
+            let mask_rhs = self.asm.add_constant(&mask_rhs);
 
-            self.asm.vpshufb_rrm(dst, lhs, &mask1);
+            self.asm.vpshufb_rrm(dst, lhs, &mask_lhs);
             let scratch = regs::scratch_xmm();
-            self.asm.vpshufb_rrm(writable!(scratch), rhs, &mask2);
+            self.asm.vpshufb_rrm(writable!(scratch), rhs, &mask_rhs);
             self.asm.vpor(dst, dst.to_reg(), scratch);
         } else {
             // FIXME change to error
