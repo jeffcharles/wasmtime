@@ -1213,15 +1213,24 @@ impl Masm for MacroAssembler {
     }
 
     fn shuffle(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg, lanes: [u8; 16]) {
-        if self.flags.has_avx512vl() && self.flags.has_avx512vbmi() {
-            // Load mask into `dst`.
-            let mask_addr = self.asm.add_constant(&lanes);
-            self.asm
-                .xmm_mov_mr(&mask_addr, dst, OperandSize::S128, MemFlags::trusted());
+        // if self.flags.has_avx512vl() && self.flags.has_avx512vbmi() {
+        //     // Load mask into `dst`.
+        //     let mask_addr = self.asm.add_constant(&lanes);
+        //     self.asm
+        //         .xmm_mov_mr(&mask_addr, dst, OperandSize::S128, MemFlags::trusted());
 
-            self.asm.vpermi2b(dst, lhs, rhs);
+        //     self.asm.vpermi2b(dst, lhs, rhs);
+        // } else {
+        //     todo!("Support for shuffle on x64 without AVX512 not yet implemented")
+        // }
+        if self.flags.has_avx() {
+            self.asm.vpshufb(dst, lhs, lanes);
+            let scratch = regs::scratch_xmm();
+            // FIXME need to only use certain bytes.
+            self.asm.vpshufb(writable!(scratch), rhs, lanes);
+            self.asm.vpor(dst, dst.to_reg(), scratch);
         } else {
-            todo!("Support for shuffle on x64 without AVX512 not yet implemented")
+            todo!("Support for shuffle on x64 without AVX2 not yet implemented")
         }
     }
 }

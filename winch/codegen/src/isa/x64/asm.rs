@@ -18,7 +18,7 @@ use cranelift_codegen::{
                 self, AluRmiROpcode, Amode, CmpOpcode, DivSignedness, ExtMode, FromWritableReg,
                 Gpr, GprMem, GprMemImm, Imm8Gpr, Imm8Reg, RegMem, RegMemImm,
                 ShiftKind as CraneliftShiftKind, SseOpcode, SyntheticAmode, WritableGpr,
-                WritableXmm, Xmm, XmmMem, XmmMemAligned, CC,
+                WritableXmm, Xmm, XmmMem, XmmMemAligned, XmmMemImm, CC,
             },
             encoding::rex::{encode_modrm, RexFlags},
             settings as x64_settings, EmitInfo, EmitState, Inst,
@@ -1411,6 +1411,27 @@ impl Assembler {
             src2: XmmMem::unwrap_new(rhs.into()),
             dst: dst.to_reg().into(),
         });
+    }
+
+    /// Shuffles bytes in `src` according to contents of `imm` and puts
+    /// result in dst.
+    pub fn vpshufb(&mut self, dst: WritableReg, src: Reg, imm: u8) {
+        self.emit(Inst::XmmRmiRVex {
+            op: args::AvxOpcode::Vpshufb,
+            src1: src.into(),
+            src2: XmmMemImm::unwrap_new(RegMemImm::imm(imm)),
+            dst: dst.to_reg().into(),
+        });
+    }
+
+    /// Bitwise OR of `src1` and `src2`.
+    pub fn vpor(&mut self, dst: WritableReg, src1: Reg, src2: Reg) {
+        self.emit(Inst::XmmRmiRVex {
+            op: args::AvxOpcode::Vpor,
+            src1: src1.into(),
+            src2: XmmMemImm::unwrap_new(src2.into()),
+            dst: dst.to_reg().into(),
+        })
     }
 }
 
