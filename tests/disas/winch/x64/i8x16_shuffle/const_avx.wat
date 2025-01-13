@@ -24,8 +24,8 @@
 ;;       movdqu  0x2c(%rip), %xmm0
 ;;       movdqu  0x34(%rip), %xmm1
 ;;       vpshufb 0x3b(%rip), %xmm1, %xmm1
-;;       vpshufb 0x42(%rip), %xmm0, %xmm0
-;;       vpor    %xmm0, %xmm1, %xmm1
+;;       vpshufb 0x42(%rip), %xmm0, %xmm15
+;;       vpor    %xmm1, %xmm15, %xmm1
 ;;       movdqa  %xmm1, %xmm0
 ;;       addq    $0x10, %rsp
 ;;       popq    %rbp
@@ -50,6 +50,4 @@
 ;;   7e: addb    %al, (%rax)
 ;;   80: addb    %al, (%rcx)
 ;;   82: addb    (%rbx), %al
-;;   84: addb    %al, (%rax)
-;;   86: addb    %al, (%rax)
-;;   88: addb    $5, %al
+;;   84: addb    $6, 0x5048080(%rax)
