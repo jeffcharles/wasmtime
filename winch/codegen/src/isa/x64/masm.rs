@@ -1218,9 +1218,11 @@ impl Masm for MacroAssembler {
             let mut mask_rhs: [u8; 16] = [0; 16];
             for i in 0..lanes.len() {
                 if lanes[i] > 15 {
+                    mask_lhs[i] = 0x80;
                     mask_rhs[i] = lanes[i] - 16;
                 } else {
                     mask_lhs[i] = lanes[i];
+                    mask_rhs[i] = 0x80;
                 }
             }
             let mask_lhs = self.asm.add_constant(&mask_lhs);
