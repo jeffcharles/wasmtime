@@ -906,7 +906,7 @@ impl Masm for MacroAssembler {
         Err(anyhow!(CodeGenError::unimplemented_masm_instruction()))
     }
 
-    fn extract_lane(&mut self, _src: Reg, _dst: Reg, _lane: u8) -> Result<()> {
+    fn extract_lane(&mut self, _src: Reg, _dst: WritableReg, _lane: u8) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
 }

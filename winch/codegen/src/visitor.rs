@@ -2474,9 +2474,11 @@ where
 
     fn visit_i32x4_extract_lane(&mut self, lane: u8) -> Self::Output {
         let src = self.context.pop_to_reg(self.masm, None)?;
-        let dst = self.context.any_gpr(self.masm)?;
-        self.masm.extract_lane(src.into(), dst, lane);
-        self.context.stack.push(Val::Reg(TypedReg::i32(dst)));
+        let dst = writable!(self.context.any_gpr(self.masm)?);
+        self.masm.extract_lane(src.into(), dst, lane)?;
+        self.context
+            .stack
+            .push(Val::Reg(TypedReg::i32(dst.to_reg())));
         Ok(())
     }
 

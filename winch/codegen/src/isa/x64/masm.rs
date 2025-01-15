@@ -1313,8 +1313,13 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn extract_lane(&mut self, _src: Reg, _dst: Reg, _lane: u8) -> Result<()> {
-        todo!()
+    fn extract_lane(&mut self, src: Reg, dst: WritableReg, lane: u8) -> Result<()> {
+        if !self.flags.has_avx() {
+            bail!(CodeGenError::UnimplementedForNoAvx);
+        }
+
+        self.asm.xmm_vpextr_rr(dst, src, lane);
+        Ok(())
     }
 }
 

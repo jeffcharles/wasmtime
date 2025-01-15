@@ -1271,5 +1271,5 @@ pub(crate) trait MacroAssembler {
     ) -> Result<()>;
 
     /// Extracts the scalar value from `src` in `lane` to `dst`.
-    fn extract_lane(&mut self, src: Reg, dst: Reg, lane: u8) -> Result<()>;
+    fn extract_lane(&mut self, src: Reg, dst: WritableReg, lane: u8) -> Result<()>;
 }
