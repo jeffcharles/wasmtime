@@ -556,7 +556,7 @@ impl Masm for MacroAssembler {
         kind: DivKind,
         size: OperandSize,
     ) -> Result<()> {
-        context.binop(self, size, |this, dividend, divisor, size| {
+        context.binop(self, |this, dividend, divisor| {
             this.asm
                 .div_rrr(divisor, dividend, writable!(dividend), kind, size);
             match size {
@@ -573,7 +573,7 @@ impl Masm for MacroAssembler {
         kind: RemKind,
         size: OperandSize,
     ) -> Result<()> {
-        context.binop(self, size, |this, dividend, divisor, size| {
+        context.binop(self, |this, dividend, divisor| {
             this.asm
                 .rem_rrr(divisor, dividend, writable!(dividend), kind, size);
             match size {

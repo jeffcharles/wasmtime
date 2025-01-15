@@ -318,189 +318,143 @@ where
     }
 
     fn visit_f32_add(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S32,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_add(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_add(writable!(dst), dst, src, OperandSize::S32)?;
                 Ok(TypedReg::f32(dst))
-            },
-        )
+            })
     }
 
     fn visit_f64_add(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S64,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_add(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_add(writable!(dst), dst, src, OperandSize::S64)?;
                 Ok(TypedReg::f64(dst))
-            },
-        )
+            })
     }
 
     fn visit_f32_sub(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S32,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_sub(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_sub(writable!(dst), dst, src, OperandSize::S32)?;
                 Ok(TypedReg::f32(dst))
-            },
-        )
+            })
     }
 
     fn visit_f64_sub(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S64,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_sub(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_sub(writable!(dst), dst, src, OperandSize::S64)?;
                 Ok(TypedReg::f64(dst))
-            },
-        )
+            })
     }
 
     fn visit_f32_mul(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S32,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_mul(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_mul(writable!(dst), dst, src, OperandSize::S32)?;
                 Ok(TypedReg::f32(dst))
-            },
-        )
+            })
     }
 
     fn visit_f64_mul(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S64,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_mul(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_mul(writable!(dst), dst, src, OperandSize::S64)?;
                 Ok(TypedReg::f64(dst))
-            },
-        )
+            })
     }
 
     fn visit_f32_div(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S32,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_div(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_div(writable!(dst), dst, src, OperandSize::S32)?;
                 Ok(TypedReg::f32(dst))
-            },
-        )
+            })
     }
 
     fn visit_f64_div(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S64,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_div(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_div(writable!(dst), dst, src, OperandSize::S64)?;
                 Ok(TypedReg::f64(dst))
-            },
-        )
+            })
     }
 
     fn visit_f32_min(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S32,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_min(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_min(writable!(dst), dst, src, OperandSize::S32)?;
                 Ok(TypedReg::f32(dst))
-            },
-        )
+            })
     }
 
     fn visit_f64_min(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S64,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_min(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_min(writable!(dst), dst, src, OperandSize::S64)?;
                 Ok(TypedReg::f64(dst))
-            },
-        )
+            })
     }
 
     fn visit_f32_max(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S32,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_max(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_max(writable!(dst), dst, src, OperandSize::S32)?;
                 Ok(TypedReg::f32(dst))
-            },
-        )
+            })
     }
 
     fn visit_f64_max(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S64,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_max(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_max(writable!(dst), dst, src, OperandSize::S64)?;
                 Ok(TypedReg::f64(dst))
-            },
-        )
+            })
     }
 
     fn visit_f32_copysign(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S32,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_copysign(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_copysign(writable!(dst), dst, src, OperandSize::S32)?;
                 Ok(TypedReg::f32(dst))
-            },
-        )
+            })
     }
 
     fn visit_f64_copysign(&mut self) -> Self::Output {
-        self.context.binop(
-            self.masm,
-            OperandSize::S64,
-            &mut |masm: &mut M, dst, src, size| {
-                masm.float_copysign(writable!(dst), dst, src, size)?;
+        self.context
+            .binop(self.masm, &mut |masm: &mut M, dst, src| {
+                masm.float_copysign(writable!(dst), dst, src, OperandSize::S64)?;
                 Ok(TypedReg::f64(dst))
-            },
-        )
+            })
     }
 
     fn visit_f32_abs(&mut self) -> Self::Output {
-        self.context
-            .unop(self.masm, OperandSize::S32, &mut |masm, reg, size| {
-                masm.float_abs(writable!(reg), size)?;
-                Ok(TypedReg::f32(reg))
-            })
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.float_abs(writable!(reg), OperandSize::S32)?;
+            Ok(TypedReg::f32(reg))
+        })
     }
 
     fn visit_f64_abs(&mut self) -> Self::Output {
-        self.context
-            .unop(self.masm, OperandSize::S64, &mut |masm, reg, size| {
-                masm.float_abs(writable!(reg), size)?;
-                Ok(TypedReg::f64(reg))
-            })
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.float_abs(writable!(reg), OperandSize::S64)?;
+            Ok(TypedReg::f64(reg))
+        })
     }
 
     fn visit_f32_neg(&mut self) -> Self::Output {
-        self.context
-            .unop(self.masm, OperandSize::S32, &mut |masm, reg, size| {
-                masm.float_neg(writable!(reg), size)?;
-                Ok(TypedReg::f32(reg))
-            })
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.float_neg(writable!(reg), OperandSize::S32)?;
+            Ok(TypedReg::f32(reg))
+        })
     }
 
     fn visit_f64_neg(&mut self) -> Self::Output {
-        self.context
-            .unop(self.masm, OperandSize::S64, &mut |masm, reg, size| {
-                masm.float_neg(writable!(reg), size)?;
-                Ok(TypedReg::f64(reg))
-            })
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.float_neg(writable!(reg), OperandSize::S64)?;
+            Ok(TypedReg::f64(reg))
+        })
     }
 
     fn visit_f32_floor(&mut self) -> Self::Output {
@@ -608,19 +562,17 @@ where
     }
 
     fn visit_f32_sqrt(&mut self) -> Self::Output {
-        self.context
-            .unop(self.masm, OperandSize::S32, &mut |masm, reg, size| {
-                masm.float_sqrt(writable!(reg), reg, size)?;
-                Ok(TypedReg::f32(reg))
-            })
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.float_sqrt(writable!(reg), reg, OperandSize::S32)?;
+            Ok(TypedReg::f32(reg))
+        })
     }
 
     fn visit_f64_sqrt(&mut self) -> Self::Output {
-        self.context
-            .unop(self.masm, OperandSize::S64, &mut |masm, reg, size| {
-                masm.float_sqrt(writable!(reg), reg, size)?;
-                Ok(TypedReg::f64(reg))
-            })
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.float_sqrt(writable!(reg), reg, OperandSize::S64)?;
+            Ok(TypedReg::f64(reg))
+        })
     }
 
     fn visit_f32_eq(&mut self) -> Self::Output {
@@ -830,59 +782,57 @@ where
     }
 
     fn visit_f32_demote_f64(&mut self) -> Self::Output {
-        self.context
-            .unop(self.masm, OperandSize::S64, &mut |masm, reg, _size| {
-                masm.demote(writable!(reg), reg)?;
-                Ok(TypedReg::f32(reg))
-            })
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.demote(writable!(reg), reg)?;
+            Ok(TypedReg::f32(reg))
+        })
     }
 
     fn visit_f64_promote_f32(&mut self) -> Self::Output {
-        self.context
-            .unop(self.masm, OperandSize::S32, &mut |masm, reg, _size| {
-                masm.promote(writable!(reg), reg)?;
-                Ok(TypedReg::f64(reg))
-            })
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.promote(writable!(reg), reg)?;
+            Ok(TypedReg::f64(reg))
+        })
     }
 
     fn visit_i32_add(&mut self) -> Self::Output {
-        self.context.i32_binop(self.masm, |masm, dst, src, size| {
-            masm.add(writable!(dst), dst, src, size)?;
+        self.context.i32_binop(self.masm, |masm, dst, src| {
+            masm.add(writable!(dst), dst, src, OperandSize::S32)?;
             Ok(TypedReg::i32(dst))
         })
     }
 
     fn visit_i64_add(&mut self) -> Self::Output {
-        self.context.i64_binop(self.masm, |masm, dst, src, size| {
-            masm.add(writable!(dst), dst, src, size)?;
+        self.context.i64_binop(self.masm, |masm, dst, src| {
+            masm.add(writable!(dst), dst, src, OperandSize::S64)?;
             Ok(TypedReg::i64(dst))
         })
     }
 
     fn visit_i32_sub(&mut self) -> Self::Output {
-        self.context.i32_binop(self.masm, |masm, dst, src, size| {
-            masm.sub(writable!(dst), dst, src, size)?;
+        self.context.i32_binop(self.masm, |masm, dst, src| {
+            masm.sub(writable!(dst), dst, src, OperandSize::S32)?;
             Ok(TypedReg::i32(dst))
         })
     }
 
     fn visit_i64_sub(&mut self) -> Self::Output {
-        self.context.i64_binop(self.masm, |masm, dst, src, size| {
-            masm.sub(writable!(dst), dst, src, size)?;
+        self.context.i64_binop(self.masm, |masm, dst, src| {
+            masm.sub(writable!(dst), dst, src, OperandSize::S64)?;
             Ok(TypedReg::i64(dst))
         })
     }
 
     fn visit_i32_mul(&mut self) -> Self::Output {
-        self.context.i32_binop(self.masm, |masm, dst, src, size| {
-            masm.mul(writable!(dst), dst, src, size)?;
+        self.context.i32_binop(self.masm, |masm, dst, src| {
+            masm.mul(writable!(dst), dst, src, OperandSize::S32)?;
             Ok(TypedReg::i32(dst))
         })
     }
 
     fn visit_i64_mul(&mut self) -> Self::Output {
-        self.context.i64_binop(self.masm, |masm, dst, src, size| {
-            masm.mul(writable!(dst), dst, src, size)?;
+        self.context.i64_binop(self.masm, |masm, dst, src| {
+            masm.mul(writable!(dst), dst, src, OperandSize::S64)?;
             Ok(TypedReg::i64(dst))
         })
     }
@@ -1026,8 +976,8 @@ where
     fn visit_i32_eqz(&mut self) -> Self::Output {
         use OperandSize::*;
 
-        self.context.unop(self.masm, S32, &mut |masm, reg, size| {
-            masm.cmp_with_set(writable!(reg.into()), RegImm::i32(0), IntCmpKind::Eq, size)?;
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.cmp_with_set(writable!(reg.into()), RegImm::i32(0), IntCmpKind::Eq, S32)?;
             Ok(TypedReg::i32(reg))
         })
     }
@@ -1035,8 +985,8 @@ where
     fn visit_i64_eqz(&mut self) -> Self::Output {
         use OperandSize::*;
 
-        self.context.unop(self.masm, S64, &mut |masm, reg, size| {
-            masm.cmp_with_set(writable!(reg.into()), RegImm::i64(0), IntCmpKind::Eq, size)?;
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.cmp_with_set(writable!(reg.into()), RegImm::i64(0), IntCmpKind::Eq, S64)?;
             Ok(TypedReg::i32(reg)) // Return value for `i64.eqz` is an `i32`.
         })
     }
@@ -1044,8 +994,8 @@ where
     fn visit_i32_clz(&mut self) -> Self::Output {
         use OperandSize::*;
 
-        self.context.unop(self.masm, S32, &mut |masm, reg, size| {
-            masm.clz(writable!(reg), reg, size)?;
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.clz(writable!(reg), reg, S32)?;
             Ok(TypedReg::i32(reg))
         })
     }
@@ -1053,8 +1003,8 @@ where
     fn visit_i64_clz(&mut self) -> Self::Output {
         use OperandSize::*;
 
-        self.context.unop(self.masm, S64, &mut |masm, reg, size| {
-            masm.clz(writable!(reg), reg, size)?;
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.clz(writable!(reg), reg, S64)?;
             Ok(TypedReg::i64(reg))
         })
     }
@@ -1062,8 +1012,8 @@ where
     fn visit_i32_ctz(&mut self) -> Self::Output {
         use OperandSize::*;
 
-        self.context.unop(self.masm, S32, &mut |masm, reg, size| {
-            masm.ctz(writable!(reg), reg, size)?;
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.ctz(writable!(reg), reg, S32)?;
             Ok(TypedReg::i32(reg))
         })
     }
@@ -1071,50 +1021,50 @@ where
     fn visit_i64_ctz(&mut self) -> Self::Output {
         use OperandSize::*;
 
-        self.context.unop(self.masm, S64, &mut |masm, reg, size| {
-            masm.ctz(writable!(reg), reg, size)?;
+        self.context.unop(self.masm, &mut |masm, reg| {
+            masm.ctz(writable!(reg), reg, S64)?;
             Ok(TypedReg::i64(reg))
         })
     }
 
     fn visit_i32_and(&mut self) -> Self::Output {
-        self.context.i32_binop(self.masm, |masm, dst, src, size| {
-            masm.and(writable!(dst), dst, src, size)?;
+        self.context.i32_binop(self.masm, |masm, dst, src| {
+            masm.and(writable!(dst), dst, src, OperandSize::S32)?;
             Ok(TypedReg::i32(dst))
         })
     }
 
     fn visit_i64_and(&mut self) -> Self::Output {
-        self.context.i64_binop(self.masm, |masm, dst, src, size| {
-            masm.and(writable!(dst), dst, src, size)?;
+        self.context.i64_binop(self.masm, |masm, dst, src| {
+            masm.and(writable!(dst), dst, src, OperandSize::S64)?;
             Ok(TypedReg::i64(dst))
         })
     }
 
     fn visit_i32_or(&mut self) -> Self::Output {
-        self.context.i32_binop(self.masm, |masm, dst, src, size| {
-            masm.or(writable!(dst), dst, src, size)?;
+        self.context.i32_binop(self.masm, |masm, dst, src| {
+            masm.or(writable!(dst), dst, src, OperandSize::S32)?;
             Ok(TypedReg::i32(dst))
         })
     }
 
     fn visit_i64_or(&mut self) -> Self::Output {
-        self.context.i64_binop(self.masm, |masm, dst, src, size| {
-            masm.or(writable!(dst), dst, src, size)?;
+        self.context.i64_binop(self.masm, |masm, dst, src| {
+            masm.or(writable!(dst), dst, src, OperandSize::S64)?;
             Ok(TypedReg::i64(dst))
         })
     }
 
     fn visit_i32_xor(&mut self) -> Self::Output {
-        self.context.i32_binop(self.masm, |masm, dst, src, size| {
-            masm.xor(writable!(dst), dst, src, size)?;
+        self.context.i32_binop(self.masm, |masm, dst, src| {
+            masm.xor(writable!(dst), dst, src, OperandSize::S32)?;
             Ok(TypedReg::i32(dst))
         })
     }
 
     fn visit_i64_xor(&mut self) -> Self::Output {
-        self.context.i64_binop(self.masm, |masm, dst, src, size| {
-            masm.xor(writable!(dst), dst, src, size)?;
+        self.context.i64_binop(self.masm, |masm, dst, src| {
+            masm.xor(writable!(dst), dst, src, OperandSize::S64)?;
             Ok(TypedReg::i64(dst))
         })
     }
@@ -1200,72 +1150,56 @@ where
     }
 
     fn visit_i32_wrap_i64(&mut self) -> Self::Output {
-        use OperandSize::*;
-
-        self.context.unop(self.masm, S64, &mut |masm, reg, _size| {
+        self.context.unop(self.masm, &mut |masm, reg| {
             masm.wrap(writable!(reg), reg)?;
             Ok(TypedReg::i32(reg))
         })
     }
 
     fn visit_i64_extend_i32_s(&mut self) -> Self::Output {
-        use OperandSize::*;
-
-        self.context.unop(self.masm, S32, &mut |masm, reg, _size| {
+        self.context.unop(self.masm, &mut |masm, reg| {
             masm.extend(writable!(reg), reg, ExtendKind::I64Extend32S)?;
             Ok(TypedReg::i64(reg))
         })
     }
 
     fn visit_i64_extend_i32_u(&mut self) -> Self::Output {
-        use OperandSize::*;
-
-        self.context.unop(self.masm, S32, &mut |masm, reg, _size| {
+        self.context.unop(self.masm, &mut |masm, reg| {
             masm.extend(writable!(reg), reg, ExtendKind::I64Extend32U)?;
             Ok(TypedReg::i64(reg))
         })
     }
 
     fn visit_i32_extend8_s(&mut self) -> Self::Output {
-        use OperandSize::*;
-
-        self.context.unop(self.masm, S32, &mut |masm, reg, _size| {
+        self.context.unop(self.masm, &mut |masm, reg| {
             masm.extend(writable!(reg), reg, ExtendKind::I32Extend8S)?;
             Ok(TypedReg::i32(reg))
         })
     }
 
     fn visit_i32_extend16_s(&mut self) -> Self::Output {
-        use OperandSize::*;
-
-        self.context.unop(self.masm, S32, &mut |masm, reg, _size| {
+        self.context.unop(self.masm, &mut |masm, reg| {
             masm.extend(writable!(reg), reg, ExtendKind::I32Extend16S)?;
             Ok(TypedReg::i32(reg))
         })
     }
 
     fn visit_i64_extend8_s(&mut self) -> Self::Output {
-        use OperandSize::*;
-
-        self.context.unop(self.masm, S64, &mut |masm, reg, _size| {
+        self.context.unop(self.masm, &mut |masm, reg| {
             masm.extend(writable!(reg), reg, ExtendKind::I64Extend8S)?;
             Ok(TypedReg::i64(reg))
         })
     }
 
     fn visit_i64_extend16_s(&mut self) -> Self::Output {
-        use OperandSize::*;
-
-        self.context.unop(self.masm, S64, &mut |masm, reg, _size| {
+        self.context.unop(self.masm, &mut |masm, reg| {
             masm.extend(writable!(reg), reg, ExtendKind::I64Extend16S)?;
             Ok(TypedReg::i64(reg))
         })
     }
 
     fn visit_i64_extend32_s(&mut self) -> Self::Output {
-        use OperandSize::*;
-
-        self.context.unop(self.masm, S64, &mut |masm, reg, _size| {
+        self.context.unop(self.masm, &mut |masm, reg| {
             masm.extend(writable!(reg), reg, ExtendKind::I64Extend32S)?;
             Ok(TypedReg::i64(reg))
         })
@@ -2490,18 +2424,17 @@ where
     M: MacroAssembler,
 {
     fn cmp_i32s(&mut self, kind: IntCmpKind) -> Result<()> {
-        self.context.i32_binop(self.masm, |masm, dst, src, size| {
-            masm.cmp_with_set(writable!(dst), src, kind, size)?;
+        self.context.i32_binop(self.masm, |masm, dst, src| {
+            masm.cmp_with_set(writable!(dst), src, kind, OperandSize::S32)?;
             Ok(TypedReg::i32(dst))
         })
     }
 
     fn cmp_i64s(&mut self, kind: IntCmpKind) -> Result<()> {
-        self.context
-            .i64_binop(self.masm, move |masm, dst, src, size| {
-                masm.cmp_with_set(writable!(dst), src, kind, size)?;
-                Ok(TypedReg::i32(dst)) // Return value for comparisons is an `i32`.
-            })
+        self.context.i64_binop(self.masm, move |masm, dst, src| {
+            masm.cmp_with_set(writable!(dst), src, kind, OperandSize::S64)?;
+            Ok(TypedReg::i32(dst)) // Return value for comparisons is an `i32`.
+        })
     }
 }
 
