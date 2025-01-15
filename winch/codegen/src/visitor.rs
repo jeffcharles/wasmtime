@@ -285,6 +285,7 @@ macro_rules! def_unsupported {
     (emit I64AtomicRmw16AddU $($rest:tt)*) => {};
     (emit I64AtomicRmw32AddU $($rest:tt)*) => {};
     (emit I64AtomicRmwAdd $($rest:tt)*) => {};
+    (emit I32x4ExtractLane $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -2469,6 +2470,14 @@ where
             LoadKind::Splat(SplatKind::S64),
             MemOpKind::Normal,
         )
+    }
+
+    fn visit_i32x4_extract_lane(&mut self, lane: u8) -> Self::Output {
+        let src = self.context.pop_to_reg(self.masm, None)?;
+        let dst = self.context.any_gpr(self.masm)?;
+        self.masm.extract_lane(src.into(), dst, lane);
+        self.context.stack.push(Val::Reg(TypedReg::i32(dst)));
+        Ok(())
     }
 
     wasmparser::for_each_visit_simd_operator!(def_unsupported);

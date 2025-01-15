@@ -1312,6 +1312,10 @@ impl Masm for MacroAssembler {
 
         Ok(())
     }
+
+    fn extract_lane(&mut self, _src: Reg, _dst: Reg, _lane: u8) -> Result<()> {
+        todo!()
+    }
 }
 
 impl MacroAssembler {

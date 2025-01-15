@@ -1269,4 +1269,7 @@ pub(crate) trait MacroAssembler {
         flags: MemFlags,
         extend: Option<ExtendKind>,
     ) -> Result<()>;
+
+    /// Extracts the scalar value from `src` in `lane` to `dst`.
+    fn extract_lane(&mut self, src: Reg, dst: Reg, lane: u8) -> Result<()>;
 }
