@@ -511,6 +511,7 @@ impl<'a> CodeGenContext<'a, Emission> {
         let src = self.pop_to_reg(masm, None)?;
         let dst = writable!(self.any_gpr(masm)?);
         emit(masm, src.reg, dst)?;
+        self.free_reg(src);
         self.stack.push(Val::Reg(TypedReg::i32(dst.to_reg())));
         Ok(())
     }
