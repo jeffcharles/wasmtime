@@ -1429,7 +1429,19 @@ impl Masm for MacroAssembler {
             bail!(CodeGenError::UnimplementedForNoAvx);
         }
 
-        self.asm.xmm_vpextr_rr(dst, src, lane, kind.lane_size());
+        match kind {
+            ExtractLaneKind::I8x16S
+            | ExtractLaneKind::I8x16U
+            | ExtractLaneKind::I16x8S
+            | ExtractLaneKind::I16x8U
+            | ExtractLaneKind::I32x4
+            | ExtractLaneKind::I64x2 => self.asm.xmm_vpextr_rr(dst, src, lane, kind.lane_size()),
+            ExtractLaneKind::F32x4 | ExtractLaneKind::F64x2 => {
+                self.asm.xmm_vpshuf_rr(src, dst, lane, kind.lane_size())
+            }
+        }
+
+        // Sign-extend to 32-bits for sign extended kinds.
         match kind {
             ExtractLaneKind::I8x16S => {
                 self.asm

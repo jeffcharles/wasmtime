@@ -314,6 +314,7 @@ impl SplatKind {
 }
 
 /// Kinds of extract lane supported by WebAssembly.
+#[derive(Copy, Debug, Clone, Eq, PartialEq)]
 pub(crate) enum ExtractLaneKind {
     /// 16 lanes of 8-bit integers sign extended to 32-bits.
     I8x16S,
@@ -327,6 +328,10 @@ pub(crate) enum ExtractLaneKind {
     I32x4,
     /// 2 lanes of 64-bit integers.
     I64x2,
+    /// 4 lanes of 32-bit floats.
+    F32x4,
+    /// 2 lanes of 64-bit floats.
+    F64x2,
 }
 
 impl ExtractLaneKind {
@@ -335,8 +340,8 @@ impl ExtractLaneKind {
         match self {
             ExtractLaneKind::I8x16S | ExtractLaneKind::I8x16U => OperandSize::S8,
             ExtractLaneKind::I16x8S | ExtractLaneKind::I16x8U => OperandSize::S16,
-            ExtractLaneKind::I32x4 => OperandSize::S32,
-            ExtractLaneKind::I64x2 => OperandSize::S64,
+            ExtractLaneKind::I32x4 | ExtractLaneKind::F32x4 => OperandSize::S32,
+            ExtractLaneKind::I64x2 | ExtractLaneKind::F64x2 => OperandSize::S64,
         }
     }
 }
