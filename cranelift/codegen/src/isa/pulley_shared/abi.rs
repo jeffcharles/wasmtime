@@ -62,8 +62,14 @@ where
     ) -> CodegenResult<(u32, Option<usize>)> {
         // NB: make sure this method stays in sync with
         // `cranelift_pulley::interp::Vm::call`.
+        //
+        // In general we use the first half of all register banks as argument
+        // passing registers because, well, why not for now. Currently the only
+        // exception is x15 which is reserved as a single caller-saved register
+        // not used for arguments. This is used in `ReturnCallIndirect` to hold
+        // the location of where we're jumping to.
 
-        let x_end = 15;
+        let x_end = 14;
         let f_end = 15;
         let v_end = 15;
 
@@ -320,10 +326,10 @@ where
         match &style {
             FrameStyle::None => {}
             FrameStyle::PulleyBasicSetup { frame_size } => {
+                insts.push(RawInst::PushFrame.into());
                 insts.extend(Self::gen_sp_reg_adjust(
                     -i32::try_from(*frame_size).unwrap(),
                 ));
-                insts.push(RawInst::PushFrame.into());
             }
             FrameStyle::PulleySetupAndSaveClobbers {
                 frame_size,
@@ -481,15 +487,19 @@ where
             }
             // "far" calls are pulley->host calls so they use a different opcode
             // which is lowered with a special relocation in the backend.
-            CallDest::ExtName(name, RelocDistance::Far) => smallvec![Inst::IndirectCallHost {
-                info: Box::new(info.map(|()| name.clone()))
+            CallDest::ExtName(name, RelocDistance::Far) => {
+                smallvec![Inst::IndirectCallHost {
+                    info: Box::new(info.map(|()| name.clone()))
+                }
+                .into()]
             }
-            .into()],
             // Indirect calls are all assumed to be pulley->pulley calls
-            CallDest::Reg(reg) => smallvec![Inst::IndirectCall {
-                info: Box::new(info.map(|()| XReg::new(*reg).unwrap()))
+            CallDest::Reg(reg) => {
+                smallvec![Inst::IndirectCall {
+                    info: Box::new(info.map(|()| XReg::new(*reg).unwrap()))
+                }
+                .into()]
             }
-            .into()],
         }
     }
 
