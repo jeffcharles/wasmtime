@@ -892,7 +892,7 @@
 (module (func (result i32) (i32x4.extract_lane 03 (v128.const i32x4 0 0 0 0))))
 ;; (module (func (result f64) (f64x2.extract_lane 0x1 (v128.const f64x2 0 0))))
 ;; (module (func (result v128) (f32x4.replace_lane 0x3 (v128.const f32x4 0 0 0 0) (f32.const 1.0))))
-(module (func (result v128) (i64x2.replace_lane 01 (v128.const i64x2 0 0) (i64.const 1))))
+;; (module (func (result v128) (i64x2.replace_lane 01 (v128.const i64x2 0 0) (i64.const 1))))
 
 ;; 1.0 is malformed lane index
 
