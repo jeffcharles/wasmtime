@@ -12,9 +12,9 @@ use crate::{
         CallingConvention,
     },
     masm::{
-        CalleeKind, DivKind, ExtendKind, FloatCmpKind, Imm as I, IntCmpKind, LoadKind,
-        MacroAssembler as Masm, MemOpKind, MulWideKind, OperandSize, RegImm, RemKind, RmwOp,
-        RoundingMode, SPOffset, ShiftKind, SplatKind, StackSlot, TrapCode, TruncKind,
+        CalleeKind, DivKind, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I, IntCmpKind,
+        LoadKind, MacroAssembler as Masm, MemOpKind, MulWideKind, OperandSize, RegImm, RemKind,
+        RmwOp, RoundingMode, SPOffset, ShiftKind, SplatKind, StackSlot, TrapCode, TruncKind,
     },
     stack::TypedReg,
 };
@@ -914,7 +914,13 @@ impl Masm for MacroAssembler {
         Err(anyhow!(CodeGenError::unimplemented_masm_instruction()))
     }
 
-    fn extract_lane(&mut self, _src: Reg, _dst: WritableReg, _lane: u8) -> Result<()> {
+    fn extract_lane(
+        &mut self,
+        _src: Reg,
+        _dst: WritableReg,
+        _lane: u8,
+        _kind: ExtractLaneKind,
+    ) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
 }

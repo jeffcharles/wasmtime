@@ -478,8 +478,6 @@ impl WastTest {
                 "spec_testsuite/simd_load32_lane.wast",
                 "spec_testsuite/simd_load64_lane.wast",
                 "spec_testsuite/simd_load8_lane.wast",
-                "spec_testsuite/simd_load_extend.wast",
-                "spec_testsuite/simd_load_splat.wast",
                 "spec_testsuite/simd_load_zero.wast",
                 "spec_testsuite/simd_splat.wast",
                 "spec_testsuite/simd_store16_lane.wast",
@@ -504,6 +502,8 @@ impl WastTest {
                     "misc_testsuite/winch/_simd_lane.wast",
                     "misc_testsuite/winch/_simd_splat.wast",
                     "spec_testsuite/simd_align.wast",
+                    "spec_testsuite/simd_load_extend.wast",
+                    "spec_testsuite/simd_load_splat.wast",
                 ];
 
                 if unsupported.iter().any(|part| self.path.ends_with(part)) {

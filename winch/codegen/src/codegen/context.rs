@@ -8,7 +8,7 @@ use crate::{
     frame::Frame,
     isa::reg::RegClass,
     masm::{MacroAssembler, OperandSize, RegImm, SPOffset, ShiftKind, StackSlot},
-    reg::{writable, Reg},
+    reg::{writable, Reg, WritableReg},
     regalloc::RegAlloc,
     stack::{Stack, TypedReg, Val},
 };
@@ -499,6 +499,19 @@ impl<'a> CodeGenContext<'a, Emission> {
             emit(masm, dst, src, tmp_gpr, dst_size)
         })?;
         self.free_reg(tmp_gpr);
+        Ok(())
+    }
+
+    /// Prepares arguments for emitting an extract lane operation.
+    pub fn extract_lane_op<F, M>(&mut self, masm: &mut M, emit: F) -> Result<()>
+    where
+        F: FnOnce(&mut M, Reg, WritableReg) -> Result<()>,
+        M: MacroAssembler,
+    {
+        let src = self.pop_to_reg(masm, None)?;
+        let dst = writable!(self.any_gpr(masm)?);
+        emit(masm, src.reg, dst)?;
+        self.stack.push(Val::Reg(TypedReg::i32(dst.to_reg())));
         Ok(())
     }
 

@@ -313,6 +313,34 @@ impl SplatKind {
     }
 }
 
+/// Kinds of extract lane supported by WebAssembly.
+pub(crate) enum ExtractLaneKind {
+    /// 16 lanes of 8-bit integers sign extended to 32-bits.
+    I8x16S,
+    /// 16 lanes of 8-bit integers zero extended to 32-bits.
+    I8x16U,
+    /// 8 lanes of 16-bit integers sign extended to 32-bits.
+    I16x8S,
+    /// 8 lanes of 16-bit integers zero extended to 32-bits.
+    I16x8U,
+    /// 4 lanes of 32-bit integers.
+    I32x4,
+    /// 2 lanes of 64-bit integers.
+    I64x2,
+}
+
+impl ExtractLaneKind {
+    /// The lane size to use for different kinds of extract lane kinds.
+    pub(crate) fn lane_size(&self) -> OperandSize {
+        match self {
+            ExtractLaneKind::I8x16S | ExtractLaneKind::I8x16U => OperandSize::S8,
+            ExtractLaneKind::I16x8S | ExtractLaneKind::I16x8U => OperandSize::S16,
+            ExtractLaneKind::I32x4 => OperandSize::S32,
+            ExtractLaneKind::I64x2 => OperandSize::S64,
+        }
+    }
+}
+
 /// Kinds of behavior supported by Wasm loads.
 pub(crate) enum LoadKind {
     /// Load the entire bytes of the operand size without any modifications.
@@ -1323,5 +1351,11 @@ pub(crate) trait MacroAssembler {
     ) -> Result<()>;
 
     /// Extracts the scalar value from `src` in `lane` to `dst`.
-    fn extract_lane(&mut self, src: Reg, dst: WritableReg, lane: u8) -> Result<()>;
+    fn extract_lane(
+        &mut self,
+        src: Reg,
+        dst: WritableReg,
+        lane: u8,
+        kind: ExtractLaneKind,
+    ) -> Result<()>;
 }

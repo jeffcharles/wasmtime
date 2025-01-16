@@ -7,9 +7,9 @@ use super::{
 use anyhow::{anyhow, bail, Result};
 
 use crate::masm::{
-    DivKind, ExtendKind, FloatCmpKind, Imm as I, IntCmpKind, LoadKind, MacroAssembler as Masm,
-    MemOpKind, MulWideKind, OperandSize, RegImm, RemKind, RmwOp, RoundingMode, ShiftKind,
-    SplatKind, TrapCode, TruncKind, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
+    DivKind, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I, IntCmpKind, LoadKind,
+    MacroAssembler as Masm, MemOpKind, MulWideKind, OperandSize, RegImm, RemKind, RmwOp,
+    RoundingMode, ShiftKind, SplatKind, TrapCode, TruncKind, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
 };
 use crate::{
     abi::{self, align_to, calculate_frame_adjustment, LocalSlot},
@@ -1418,12 +1418,30 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn extract_lane(&mut self, src: Reg, dst: WritableReg, lane: u8) -> Result<()> {
+    fn extract_lane(
+        &mut self,
+        src: Reg,
+        dst: WritableReg,
+        lane: u8,
+        kind: ExtractLaneKind,
+    ) -> Result<()> {
         if !self.flags.has_avx() {
             bail!(CodeGenError::UnimplementedForNoAvx);
         }
 
-        self.asm.xmm_vpextr_rr(dst, src, lane);
+        self.asm.xmm_vpextr_rr(dst, src, lane, kind.lane_size());
+        match kind {
+            ExtractLaneKind::I8x16S => {
+                self.asm
+                    .movsx_rr(dst.to_reg(), dst, ExtendKind::I32Extend8S)
+            }
+            ExtractLaneKind::I16x8S => {
+                self.asm
+                    .movsx_rr(dst.to_reg(), dst, ExtendKind::I32Extend16S)
+            }
+            _ => (),
+        }
+
         Ok(())
     }
 }
