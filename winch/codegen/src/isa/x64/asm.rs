@@ -1519,7 +1519,7 @@ impl Assembler {
         self.emit(Inst::XmmToGprImmVex {
             op,
             src: src.into(),
-            dst: dst.into(),
+            dst: dst.to_reg().into(),
             imm: lane,
         });
     }
