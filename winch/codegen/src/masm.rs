@@ -346,6 +346,16 @@ impl ExtractLaneKind {
     }
 }
 
+impl From<ExtractLaneKind> for ExtendKind {
+    fn from(value: ExtractLaneKind) -> Self {
+        match value {
+            ExtractLaneKind::I8x16S => Self::I32Extend8S,
+            ExtractLaneKind::I16x8S => Self::I32Extend16S,
+            _ => unimplemented!(),
+        }
+    }
+}
+
 /// Kinds of behavior supported by Wasm loads.
 pub(crate) enum LoadKind {
     /// Load the entire bytes of the operand size without any modifications.

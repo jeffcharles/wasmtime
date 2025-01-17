@@ -1436,20 +1436,28 @@ impl Masm for MacroAssembler {
             | ExtractLaneKind::I16x8U
             | ExtractLaneKind::I32x4
             | ExtractLaneKind::I64x2 => self.asm.xmm_vpextr_rr(dst, src, lane, kind.lane_size()),
-            ExtractLaneKind::F32x4 | ExtractLaneKind::F64x2 => {
-                self.asm.xmm_vpshuf_rr(src, dst, lane, kind.lane_size())
+            ExtractLaneKind::F32x4 | ExtractLaneKind::F64x2 if lane == 0 => {
+                // If the `src` and `dst` registers are the same, then the
+                // appropriate value is already in the right place the register.
+                assert!(src == dst.to_reg());
+            }
+            ExtractLaneKind::F32x4 => self.asm.xmm_vpshuf_rr(src, dst, lane, kind.lane_size()),
+            ExtractLaneKind::F64x2 => {
+                // `0b11_10` selects the high and low 32-bits of the second
+                // 64-bit, so `0b11_10_11_10` splats the 64-bit value across
+                // both lanes. Since we put an `f64` on the stack, we use
+                // the splatted value.
+                // Double-check `lane == 0` was handled in another branch.
+                assert!(lane == 1);
+                self.asm
+                    .xmm_vpshuf_rr(src, dst, 0b11_10_11_10, OperandSize::S32)
             }
         }
 
         // Sign-extend to 32-bits for sign extended kinds.
         match kind {
-            ExtractLaneKind::I8x16S => {
-                self.asm
-                    .movsx_rr(dst.to_reg(), dst, ExtendKind::I32Extend8S)
-            }
-            ExtractLaneKind::I16x8S => {
-                self.asm
-                    .movsx_rr(dst.to_reg(), dst, ExtendKind::I32Extend16S)
+            ExtractLaneKind::I8x16S | ExtractLaneKind::I16x8S => {
+                self.asm.movsx_rr(dst.to_reg(), dst, kind.into())
             }
             _ => (),
         }

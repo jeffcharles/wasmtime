@@ -591,7 +591,8 @@ impl Assembler {
 
         let op = match size {
             OperandSize::S16 => AvxOpcode::Vpshuflw,
-            OperandSize::S64 => AvxOpcode::Vpshufd,
+            // No quad-word equivalent so adjust the mask.
+            OperandSize::S32 | OperandSize::S64 => AvxOpcode::Vpshufd,
             _ => unimplemented!(),
         };
 
