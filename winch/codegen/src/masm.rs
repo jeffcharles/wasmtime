@@ -1443,4 +1443,14 @@ pub(crate) trait MacroAssembler {
         flags: MemFlags,
         extend: Option<Extend<Zero>>,
     ) -> Result<()>;
+
+    /// Compares vector registers `lhs` and `rhs` and puts the vector of
+    /// results in `dst`.
+    fn vector_eq(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        lane_size: OperandSize,
+    ) -> Result<()>;
 }

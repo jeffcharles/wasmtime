@@ -1580,6 +1580,17 @@ impl Masm for MacroAssembler {
 
         Ok(())
     }
+
+    fn vector_eq(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        lane_size: OperandSize,
+    ) -> Result<()> {
+        self.asm.xmm_vpcmpeq_rrr(dst, lhs, rhs, lane_size);
+        Ok(())
+    }
 }
 
 impl MacroAssembler {

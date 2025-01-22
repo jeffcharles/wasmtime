@@ -1716,6 +1716,22 @@ impl Assembler {
             imm: lane,
         });
     }
+
+    /// Compare vector registers `lhs` and `rhs` for equality and write the
+    /// resulting vector into `dst`.
+    pub fn xmm_vpcmpeq_rrr(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S8 => AvxOpcode::Vpcmpeqb,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: lhs.into(),
+            src2: XmmMemImm::unwrap_new(rhs.into()),
+            dst: dst.to_reg().into(),
+        })
+    }
 }
 
 /// Captures the region in a MachBuffer where an add-with-immediate instruction would be emitted,

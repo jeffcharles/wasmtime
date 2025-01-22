@@ -343,6 +343,7 @@ macro_rules! def_unsupported {
     (emit I64AtomicRmw16CmpxchgU $($rest:tt)*) => {};
     (emit I64AtomicRmw32CmpxchgU $($rest:tt)*) => {};
     (emit I64AtomicRmwCmpxchg $($rest:tt)*) => {};
+    (emit I8x16Eq $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -2908,6 +2909,14 @@ where
         self.context
             .extract_lane_op(self.masm, ExtractLaneKind::F64x2, |masm, src, dst, kind| {
                 masm.extract_lane(src, dst, lane, kind)
+            })
+    }
+
+    fn visit_i8x16_eq(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S8, |masm, dst, src, size| {
+                masm.vector_eq(writable!(dst), dst, src, size)?;
+                Ok(TypedReg::v128(dst))
             })
     }
 
