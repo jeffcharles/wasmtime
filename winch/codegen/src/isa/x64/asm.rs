@@ -1722,6 +1722,7 @@ impl Assembler {
     pub fn xmm_vpcmpeq_rrr(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg, size: OperandSize) {
         let op = match size {
             OperandSize::S8 => AvxOpcode::Vpcmpeqb,
+            OperandSize::S16 => AvxOpcode::Vpcmpeqw,
             _ => unimplemented!(),
         };
 
