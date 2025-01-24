@@ -1723,6 +1723,7 @@ impl Assembler {
         let op = match size {
             OperandSize::S8 => AvxOpcode::Vpcmpeqb,
             OperandSize::S16 => AvxOpcode::Vpcmpeqw,
+            OperandSize::S32 => AvxOpcode::Vpcmpeqd,
             _ => unimplemented!(),
         };
 
