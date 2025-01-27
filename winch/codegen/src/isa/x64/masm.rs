@@ -1622,7 +1622,7 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn vector_lt_s(
+    fn vector_lt(
         &mut self,
         dst: WritableReg,
         lhs: Reg,

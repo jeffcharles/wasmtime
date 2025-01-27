@@ -1754,6 +1754,7 @@ impl Assembler {
             OperandSize::S8 => AvxOpcode::Vpcmpgtb,
             OperandSize::S16 => AvxOpcode::Vpcmpgtw,
             OperandSize::S32 => AvxOpcode::Vpcmpgtd,
+            OperandSize::S64 => AvxOpcode::Vpcmpgtq,
             _ => unimplemented!(),
         };
 

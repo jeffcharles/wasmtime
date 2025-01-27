@@ -1500,9 +1500,9 @@ pub(crate) trait MacroAssembler {
         lane_size: OperandSize,
     ) -> Result<()>;
 
-    /// Performs a signed less than comparison with vector registers `lhs` and
-    /// `rhs` and puts the vector of results in `dst`.
-    fn vector_lt_s(
+    /// Performs a less than comparison with vector registers `lhs` and `rhs`
+    /// and puts the vector of results in `dst`.
+    fn vector_lt(
         &mut self,
         dst: WritableReg,
         lhs: Reg,

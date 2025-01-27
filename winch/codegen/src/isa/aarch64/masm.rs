@@ -960,7 +960,7 @@ impl Masm for MacroAssembler {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
 
-    fn vector_lt_s(
+    fn vector_lt(
         &mut self,
         _dst: WritableReg,
         _lhs: Reg,
