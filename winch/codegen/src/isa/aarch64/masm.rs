@@ -949,6 +949,16 @@ impl Masm for MacroAssembler {
     ) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
+
+    fn vector_ne(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        lane_size: OperandSize,
+    ) -> Result<()> {
+        bail!(CodeGenError::unimplemented_masm_instruction())
+    }
 }
 
 impl MacroAssembler {

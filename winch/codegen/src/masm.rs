@@ -1444,9 +1444,19 @@ pub(crate) trait MacroAssembler {
         extend: Option<Extend<Zero>>,
     ) -> Result<()>;
 
-    /// Compares vector registers `lhs` and `rhs` and puts the vector of
-    /// results in `dst`.
+    /// Compares vector registers `lhs` and `rhs` for equality and puts the
+    /// vector of results in `dst`.
     fn vector_eq(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        lane_size: OperandSize,
+    ) -> Result<()>;
+
+    /// Compares vector registers `lhs` and `rhs` for inequality and puts the
+    /// vector of results in `dst`.
+    fn vector_ne(
         &mut self,
         dst: WritableReg,
         lhs: Reg,

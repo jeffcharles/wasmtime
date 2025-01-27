@@ -1591,6 +1591,27 @@ impl Masm for MacroAssembler {
         self.asm.xmm_vpcmpeq_rrr(dst, lhs, rhs, lane_size);
         Ok(())
     }
+
+    fn vector_ne(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        lane_size: OperandSize,
+    ) -> Result<()> {
+        // Perform an equality comparison first.
+        self.asm
+            .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, lane_size);
+
+        // Set a vector register to all true values.
+        self.asm
+            .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, lane_size);
+
+        // Performing a logical xor will invert the equality results.
+        self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
+
+        Ok(())
+    }
 }
 
 impl MacroAssembler {
