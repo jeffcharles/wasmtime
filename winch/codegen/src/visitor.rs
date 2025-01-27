@@ -346,6 +346,7 @@ macro_rules! def_unsupported {
     (emit I8x16Eq $($rest:tt)*) => {};
     (emit I16x8Eq $($rest:tt)*) => {};
     (emit I32x4Eq $($rest:tt)*) => {};
+    (emit I64x2Eq $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -2933,6 +2934,14 @@ where
     fn visit_i32x4_eq(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, size| {
+                masm.vector_eq(writable!(dst), dst, src, size)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_i64x2_eq(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S64, |masm, dst, src, size| {
                 masm.vector_eq(writable!(dst), dst, src, size)?;
                 Ok(TypedReg::v128(dst))
             })

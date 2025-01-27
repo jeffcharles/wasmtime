@@ -1724,6 +1724,7 @@ impl Assembler {
             OperandSize::S8 => AvxOpcode::Vpcmpeqb,
             OperandSize::S16 => AvxOpcode::Vpcmpeqw,
             OperandSize::S32 => AvxOpcode::Vpcmpeqd,
+            OperandSize::S64 => AvxOpcode::Vpcmpeqq,
             _ => unimplemented!(),
         };
 
