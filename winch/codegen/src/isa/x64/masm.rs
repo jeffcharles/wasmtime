@@ -9,7 +9,8 @@ use anyhow::{anyhow, bail, Result};
 use crate::masm::{
     DivKind, Extend, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I, IntCmpKind, LoadKind,
     MacroAssembler as Masm, MemOpKind, MulWideKind, OperandSize, RegImm, RemKind, RmwOp,
-    RoundingMode, ShiftKind, SplatKind, TrapCode, TruncKind, Zero, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
+    RoundingMode, ShiftKind, SplatKind, TrapCode, TruncKind, VectorCompareKind, Zero,
+    TRUSTED_FLAGS, UNTRUSTED_FLAGS,
 };
 use crate::{
     abi::{self, align_to, calculate_frame_adjustment, LocalSlot},
@@ -1588,6 +1589,10 @@ impl Masm for MacroAssembler {
         rhs: Reg,
         lane_size: OperandSize,
     ) -> Result<()> {
+        if !self.flags.has_avx() {
+            bail!(CodeGenError::UnimplementedForNoAvx)
+        }
+
         self.asm.xmm_vpcmpeq_rrr(dst, lhs, rhs, lane_size);
         Ok(())
     }
@@ -1599,6 +1604,10 @@ impl Masm for MacroAssembler {
         rhs: Reg,
         lane_size: OperandSize,
     ) -> Result<()> {
+        if !self.flags.has_avx() {
+            bail!(CodeGenError::UnimplementedForNoAvx)
+        }
+
         // Perform an equality comparison first.
         self.asm
             .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, lane_size);
@@ -1610,6 +1619,21 @@ impl Masm for MacroAssembler {
         // Performing a logical xor will invert the equality results.
         self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
 
+        Ok(())
+    }
+
+    fn vector_lt_s(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        kind: VectorCompareKind,
+    ) -> Result<()> {
+        if !self.flags.has_avx() {
+            bail!(CodeGenError::UnimplementedForNoAvx)
+        }
+
+        self.asm.xmm_vpcmpgt_rrr(dst, lhs, rhs, kind.lane_size());
         Ok(())
     }
 }

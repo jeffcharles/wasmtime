@@ -11,7 +11,8 @@ use crate::codegen::{
 use crate::masm::{
     DivKind, Extend, ExtractLaneKind, FloatCmpKind, IntCmpKind, LoadKind, MacroAssembler,
     MemMoveDirection, MemOpKind, MulWideKind, OperandSize, RegImm, RemKind, RmwOp, RoundingMode,
-    SPOffset, ShiftKind, Signed, SplatKind, SplatLoadKind, TruncKind, VectorExtendKind, Zero,
+    SPOffset, ShiftKind, Signed, SplatKind, SplatLoadKind, TruncKind, VectorCompareKind,
+    VectorExtendKind, Zero,
 };
 
 use crate::reg::{writable, Reg};
@@ -355,6 +356,7 @@ macro_rules! def_unsupported {
     (emit I64x2Ne $($rest:tt)*) => {};
     (emit F32x4Ne $($rest:tt)*) => {};
     (emit F64x2Ne $($rest:tt)*) => {};
+    (emit I8x16LtS $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3017,6 +3019,14 @@ where
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, size| {
                 masm.vector_ne(writable!(dst), dst, src, size)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_i8x16_lt_s(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
+                masm.vector_lt_s(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
                 Ok(TypedReg::v128(dst))
             })
     }

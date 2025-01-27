@@ -449,6 +449,42 @@ impl LoadKind {
     }
 }
 
+/// Kinds of vector comparisons supported by WebAssembly.
+pub(crate) enum VectorCompareKind {
+    /// 16 lanes of signed 8 bit integers.
+    I8x16S,
+    /// 16 lanes of unsigned 8 bit integers.
+    I8x16U,
+    /// 8 lanes of signed 16 bit integers.
+    I16x8S,
+    /// 8 lanes of unsigned 16 bit integers.
+    I16x8U,
+    /// 4 lanes of signed 32 bit integers.
+    I32x4S,
+    /// 4 lanes of unsigned 32 bit integers.
+    I32x4U,
+    /// 2 lanes of signed 64 bit integers.
+    I64x2S,
+    /// 2 lanes of unsigned 64 bit integers.
+    I64x2U,
+    /// 4 lanes of 32 bit floats.
+    F32x4,
+    /// 2 lanes of 64 bit floats.
+    F64x2,
+}
+
+impl VectorCompareKind {
+    /// Get the lane size to use.
+    pub(crate) fn lane_size(&self) -> OperandSize {
+        match self {
+            Self::I8x16S | Self::I8x16U => OperandSize::S8,
+            Self::I16x8S | Self::I16x8U => OperandSize::S16,
+            Self::I32x4S | Self::I32x4U | Self::F32x4 => OperandSize::S32,
+            Self::I64x2S | Self::I64x2U | Self::F64x2 => OperandSize::S64,
+        }
+    }
+}
+
 /// Operand size, in bits.
 #[derive(Copy, Debug, Clone, Eq, PartialEq)]
 pub(crate) enum OperandSize {
@@ -1462,5 +1498,15 @@ pub(crate) trait MacroAssembler {
         lhs: Reg,
         rhs: Reg,
         lane_size: OperandSize,
+    ) -> Result<()>;
+
+    /// Performs a signed less than comparison with vector registers `lhs` and
+    /// `rhs` and puts the vector of results in `dst`.
+    fn vector_lt_s(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        kind: VectorCompareKind,
     ) -> Result<()>;
 }

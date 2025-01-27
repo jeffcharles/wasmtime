@@ -1746,6 +1746,22 @@ impl Assembler {
             dst: dst.to_reg().into(),
         })
     }
+
+    /// Performs a greater than comparison with vectors of signed integers in
+    /// `lhs` and `rhs` and puts the results in `dst`.
+    pub fn xmm_vpcmpgt_rrr(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S8 => AvxOpcode::Vpcmpgtb,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: lhs.into(),
+            src2: XmmMemImm::unwrap_new(rhs.into()),
+            dst: dst.to_reg().into(),
+        })
+    }
 }
 
 /// Captures the region in a MachBuffer where an add-with-immediate instruction would be emitted,
