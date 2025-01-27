@@ -465,8 +465,6 @@ pub(crate) enum VectorCompareKind {
     I32x4U,
     /// 2 lanes of signed 64 bit integers.
     I64x2S,
-    /// 2 lanes of unsigned 64 bit integers.
-    I64x2U,
     /// 4 lanes of 32 bit floats.
     F32x4,
     /// 2 lanes of 64 bit floats.
@@ -480,7 +478,7 @@ impl VectorCompareKind {
             Self::I8x16S | Self::I8x16U => OperandSize::S8,
             Self::I16x8S | Self::I16x8U => OperandSize::S16,
             Self::I32x4S | Self::I32x4U | Self::F32x4 => OperandSize::S32,
-            Self::I64x2S | Self::I64x2U | Self::F64x2 => OperandSize::S64,
+            Self::I64x2S | Self::F64x2 => OperandSize::S64,
         }
     }
 }
