@@ -952,10 +952,10 @@ impl Masm for MacroAssembler {
 
     fn vector_ne(
         &mut self,
-        dst: WritableReg,
-        lhs: Reg,
-        rhs: Reg,
-        lane_size: OperandSize,
+        _dst: WritableReg,
+        _lhs: Reg,
+        _rhs: Reg,
+        _lane_size: OperandSize,
     ) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
