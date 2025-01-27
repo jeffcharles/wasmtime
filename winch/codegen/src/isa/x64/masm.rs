@@ -1633,7 +1633,8 @@ impl Masm for MacroAssembler {
             bail!(CodeGenError::UnimplementedForNoAvx)
         }
 
-        self.asm.xmm_vpcmpgt_rrr(dst, lhs, rhs, kind.lane_size());
+        // Perform a greater than check with reversed parameters.
+        self.asm.xmm_vpcmpgt_rrr(dst, rhs, lhs, kind.lane_size());
         Ok(())
     }
 }
