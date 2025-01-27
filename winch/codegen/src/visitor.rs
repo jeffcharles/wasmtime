@@ -353,6 +353,7 @@ macro_rules! def_unsupported {
     (emit I16x8Ne $($rest:tt)*) => {};
     (emit I32x4Ne $($rest:tt)*) => {};
     (emit I64x2Ne $($rest:tt)*) => {};
+    (emit F32x4Ne $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -2996,6 +2997,15 @@ where
     fn visit_i64x2_ne(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, size| {
+                masm.vector_ne(writable!(dst), dst, src, size)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_f32x4_ne(&mut self) -> Self::Output {
+        // FIXME look at whether `vcmpneqps` would make more sense.
+        self.context
+            .binop(self.masm, OperandSize::S32, |masm, dst, src, size| {
                 masm.vector_ne(writable!(dst), dst, src, size)?;
                 Ok(TypedReg::v128(dst))
             })
