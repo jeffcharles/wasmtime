@@ -1769,7 +1769,10 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vpcmpeq_rrr(dst, dst.to_reg(), rhs, kind.lane_size());
             }
-            VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => todo!(),
+            VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => {
+                self.asm
+                    .xmm_vcmpp_rrr(dst, lhs, rhs, kind.lane_size(), VcmpKind::Le)
+            }
         }
 
         Ok(())
