@@ -1719,7 +1719,13 @@ impl Masm for MacroAssembler {
                 self.asm.xmm_vpcmpgt_rrr(dst, lhs, rhs, kind.lane_size())
             }
             VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
-                todo!()
+                self.asm
+                    .xmm_vpmaxu_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
+                self.asm
+                    .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
+                self.asm
+                    .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
+                self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
             }
             VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => todo!(),
         }

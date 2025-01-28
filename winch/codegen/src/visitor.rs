@@ -375,6 +375,7 @@ macro_rules! def_unsupported {
     (emit F32x4Le $($rest:tt)*) => {};
     (emit F64x2Le $($rest:tt)*) => {};
     (emit I8x16GtS $($rest:tt)*) => {};
+    (emit I8x16GtU $($rest:tt)*) => {};
     (emit I16x8GtS $($rest:tt)*) => {};
     (emit I32x4GtS $($rest:tt)*) => {};
     (emit I64x2GtS $($rest:tt)*) => {};
@@ -3192,6 +3193,14 @@ where
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
                 masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_i8x16_gt_u(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
+                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I8x16U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
