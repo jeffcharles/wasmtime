@@ -168,6 +168,10 @@ impl From<ExtendKind> for ExtMode {
 
 /// Kinds of comparisons supported by `vcmp`.
 pub(super) enum VcmpKind {
+    /// Equal comparison.
+    Eq,
+    /// Not equal comparison.
+    Ne,
     /// Less than comparison.
     Lt,
     /// Less than or equal comparison.
@@ -1868,8 +1872,10 @@ impl Assembler {
             src2: XmmMem::unwrap_new(rhs.into()),
             dst: dst.to_reg().into(),
             imm: match kind {
+                VcmpKind::Eq => 0,
                 VcmpKind::Lt => 1,
                 VcmpKind::Le => 2,
+                VcmpKind::Ne => 4,
             },
         });
     }

@@ -449,6 +449,34 @@ impl LoadKind {
     }
 }
 
+/// Kinds of vector equalities and non-equalities supported by WebAssembly.
+pub(crate) enum VectorEqualityKind {
+    /// 16 lanes of 8 bit integers.
+    I8x16,
+    /// 8 lanes of 16 bit integers.
+    I16x8,
+    /// 4 lanes of 32 bit integers.
+    I32x4,
+    /// 2 lanes of 64 bit integers.
+    I64x2,
+    /// 4 lanes of 32 bit floats.
+    F32x4,
+    /// 2 lanes of 64 bit floats.
+    F64x2,
+}
+
+impl VectorEqualityKind {
+    /// Get the lane size to use.
+    pub(crate) fn lane_size(&self) -> OperandSize {
+        match self {
+            Self::I8x16 => OperandSize::S8,
+            Self::I16x8 => OperandSize::S16,
+            Self::I32x4 | Self::F32x4 => OperandSize::S32,
+            Self::I64x2 | Self::F64x2 => OperandSize::S64,
+        }
+    }
+}
+
 /// Kinds of vector comparisons supported by WebAssembly.
 pub(crate) enum VectorCompareKind {
     /// 16 lanes of signed 8 bit integers.
@@ -1485,7 +1513,7 @@ pub(crate) trait MacroAssembler {
         dst: WritableReg,
         lhs: Reg,
         rhs: Reg,
-        lane_size: OperandSize,
+        kind: VectorEqualityKind,
     ) -> Result<()>;
 
     /// Compares vector registers `lhs` and `rhs` for inequality and puts the
@@ -1495,7 +1523,7 @@ pub(crate) trait MacroAssembler {
         dst: WritableReg,
         lhs: Reg,
         rhs: Reg,
-        lane_size: OperandSize,
+        kind: VectorEqualityKind,
     ) -> Result<()>;
 
     /// Performs a less than comparison with vector registers `lhs` and `rhs`

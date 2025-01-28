@@ -12,7 +12,7 @@ use crate::masm::{
     DivKind, Extend, ExtractLaneKind, FloatCmpKind, IntCmpKind, LoadKind, MacroAssembler,
     MemMoveDirection, MemOpKind, MulWideKind, OperandSize, RegImm, RemKind, RmwOp, RoundingMode,
     SPOffset, ShiftKind, Signed, SplatKind, SplatLoadKind, TruncKind, VectorCompareKind,
-    VectorExtendKind, Zero,
+    VectorEqualityKind, VectorExtendKind, Zero,
 };
 
 use crate::reg::{writable, Reg};
@@ -2962,98 +2962,96 @@ where
 
     fn visit_i8x16_eq(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S8, |masm, dst, src, size| {
-                masm.vector_eq(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
+                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::I8x16)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_i16x8_eq(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S16, |masm, dst, src, size| {
-                masm.vector_eq(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
+                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::I16x8)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_i32x4_eq(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S32, |masm, dst, src, size| {
-                masm.vector_eq(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
+                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::I32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_i64x2_eq(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S64, |masm, dst, src, size| {
-                masm.vector_eq(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
+                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::I64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_f32x4_eq(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S32, |masm, dst, src, size| {
-                masm.vector_eq(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
+                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::F32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_f64x2_eq(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S64, |masm, dst, src, size| {
-                masm.vector_eq(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
+                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_i8x16_ne(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S8, |masm, dst, src, size| {
-                masm.vector_ne(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
+                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::I8x16)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_i16x8_ne(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S16, |masm, dst, src, size| {
-                masm.vector_ne(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
+                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::I16x8)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_i32x4_ne(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S32, |masm, dst, src, size| {
-                masm.vector_ne(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
+                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::I32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_i64x2_ne(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S64, |masm, dst, src, size| {
-                masm.vector_ne(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
+                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::I64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_f32x4_ne(&mut self) -> Self::Output {
-        // FIXME look at whether `vcmpneqps` would make more sense.
         self.context
-            .binop(self.masm, OperandSize::S32, |masm, dst, src, size| {
-                masm.vector_ne(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
+                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::F32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
 
     fn visit_f64x2_ne(&mut self) -> Self::Output {
-        // FIXME look at whether `vcmpneqps` would make more sense.
         self.context
-            .binop(self.masm, OperandSize::S64, |masm, dst, src, size| {
-                masm.vector_ne(writable!(dst), dst, src, size)?;
+            .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
+                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }

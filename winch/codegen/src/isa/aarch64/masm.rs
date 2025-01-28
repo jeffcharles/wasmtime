@@ -15,7 +15,7 @@ use crate::{
         CalleeKind, DivKind, Extend, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I,
         IntCmpKind, LoadKind, MacroAssembler as Masm, MemOpKind, MulWideKind, OperandSize, RegImm,
         RemKind, RmwOp, RoundingMode, SPOffset, ShiftKind, SplatKind, StackSlot, TrapCode,
-        TruncKind, VectorCompareKind, Zero,
+        TruncKind, VectorCompareKind, VectorEqualityKind, Zero,
     },
     stack::TypedReg,
 };
@@ -945,7 +945,7 @@ impl Masm for MacroAssembler {
         _dst: WritableReg,
         _lhs: Reg,
         _rhs: Reg,
-        _lane_size: OperandSize,
+        _kind: VectorEqualityKind,
     ) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
@@ -955,7 +955,7 @@ impl Masm for MacroAssembler {
         _dst: WritableReg,
         _lhs: Reg,
         _rhs: Reg,
-        _lane_size: OperandSize,
+        _kind: VectorEqualityKind,
     ) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }

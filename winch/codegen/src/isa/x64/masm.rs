@@ -9,8 +9,8 @@ use anyhow::{anyhow, bail, Result};
 use crate::masm::{
     DivKind, Extend, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I, IntCmpKind, LoadKind,
     MacroAssembler as Masm, MemOpKind, MulWideKind, OperandSize, RegImm, RemKind, RmwOp,
-    RoundingMode, ShiftKind, SplatKind, TrapCode, TruncKind, VectorCompareKind, Zero,
-    TRUSTED_FLAGS, UNTRUSTED_FLAGS,
+    RoundingMode, ShiftKind, SplatKind, TrapCode, TruncKind, VectorCompareKind, VectorEqualityKind,
+    Zero, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
 };
 use crate::{
     abi::{self, align_to, calculate_frame_adjustment, LocalSlot},
@@ -1587,13 +1587,24 @@ impl Masm for MacroAssembler {
         dst: WritableReg,
         lhs: Reg,
         rhs: Reg,
-        lane_size: OperandSize,
+        kind: VectorEqualityKind,
     ) -> Result<()> {
         if !self.flags.has_avx() {
             bail!(CodeGenError::UnimplementedForNoAvx)
         }
 
-        self.asm.xmm_vpcmpeq_rrr(dst, lhs, rhs, lane_size);
+        match kind {
+            VectorEqualityKind::I8x16
+            | VectorEqualityKind::I16x8
+            | VectorEqualityKind::I32x4
+            | VectorEqualityKind::I64x2 => {
+                self.asm.xmm_vpcmpeq_rrr(dst, lhs, rhs, kind.lane_size())
+            }
+            VectorEqualityKind::F32x4 | VectorEqualityKind::F64x2 => {
+                self.asm
+                    .xmm_vcmpp_rrr(dst, lhs, rhs, kind.lane_size(), VcmpKind::Eq)
+            }
+        }
         Ok(())
     }
 
@@ -1602,23 +1613,33 @@ impl Masm for MacroAssembler {
         dst: WritableReg,
         lhs: Reg,
         rhs: Reg,
-        lane_size: OperandSize,
+        kind: VectorEqualityKind,
     ) -> Result<()> {
         if !self.flags.has_avx() {
             bail!(CodeGenError::UnimplementedForNoAvx)
         }
 
-        // Perform an equality comparison first.
-        self.asm
-            .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, lane_size);
+        match kind {
+            VectorEqualityKind::I8x16
+            | VectorEqualityKind::I16x8
+            | VectorEqualityKind::I32x4
+            | VectorEqualityKind::I64x2 => {
+                // Perform an equality comparison first.
+                self.asm
+                    .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
 
-        // Set a vector register to all true values.
-        self.asm
-            .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, lane_size);
+                // Set a vector register to all true values.
+                self.asm
+                    .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
 
-        // Performing a logical xor will invert the equality results.
-        self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
-
+                // Performing a logical xor will invert the equality results.
+                self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
+            }
+            VectorEqualityKind::F32x4 | VectorEqualityKind::F64x2 => {
+                self.asm
+                    .xmm_vcmpp_rrr(dst, lhs, rhs, kind.lane_size(), VcmpKind::Ne)
+            }
+        }
         Ok(())
     }
 
