@@ -1791,8 +1791,9 @@ impl Masm for MacroAssembler {
                     .xmm_vpcmpeq_rrr(dst, dst.to_reg(), rhs, kind.lane_size());
             }
             VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => {
+                // Perform a less than or equal comparison on swapped operands.
                 self.asm
-                    .xmm_vcmpp_rrr(dst, lhs, rhs, kind.lane_size(), VcmpKind::Le)
+                    .xmm_vcmpp_rrr(dst, rhs, lhs, kind.lane_size(), VcmpKind::Le)
             }
         }
 
