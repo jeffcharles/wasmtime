@@ -170,6 +170,8 @@ impl From<ExtendKind> for ExtMode {
 pub(super) enum VcmpKind {
     /// Less than comparison.
     Lt,
+    /// Less than or equal comparison.
+    Le,
 }
 
 /// Low level assembler implementation for x64.
@@ -1808,6 +1810,8 @@ impl Assembler {
         })
     }
 
+    /// Performs a comparison operation between vectors of floats in `lhs` and
+    /// `rhs` and puts the results in `dst`.
     pub fn xmm_vcmpp_rrr(
         &mut self,
         dst: WritableReg,
@@ -1829,6 +1833,7 @@ impl Assembler {
             dst: dst.to_reg().into(),
             imm: match kind {
                 VcmpKind::Lt => 1,
+                VcmpKind::Le => 2,
             },
         });
     }
