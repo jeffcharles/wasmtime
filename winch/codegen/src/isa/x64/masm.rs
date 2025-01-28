@@ -1729,7 +1729,11 @@ impl Masm for MacroAssembler {
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
                 self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
             }
-            VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => todo!(),
+            // Do a less than comparison with the operands swapped.
+            VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => {
+                self.asm
+                    .xmm_vcmpp_rrr(dst, rhs, lhs, kind.lane_size(), VcmpKind::Lt)
+            }
         }
         Ok(())
     }
