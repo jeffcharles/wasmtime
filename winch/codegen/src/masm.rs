@@ -1517,4 +1517,14 @@ pub(crate) trait MacroAssembler {
         rhs: Reg,
         kind: VectorCompareKind,
     ) -> Result<()>;
+
+    /// Performs a greater than comparison with vector registers `lhs` and
+    /// `rhs` and puts the vector of results in `dst`.
+    fn vector_gt(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        kind: VectorCompareKind,
+    ) -> Result<()>;
 }

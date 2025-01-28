@@ -1699,6 +1699,32 @@ impl Masm for MacroAssembler {
         }
         Ok(())
     }
+
+    fn vector_gt(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        kind: VectorCompareKind,
+    ) -> Result<()> {
+        if !self.flags.has_avx() {
+            bail!(CodeGenError::UnimplementedForNoAvx)
+        }
+
+        match kind {
+            VectorCompareKind::I8x16S
+            | VectorCompareKind::I16x8S
+            | VectorCompareKind::I32x4S
+            | VectorCompareKind::I64x2S => {
+                self.asm.xmm_vpcmpgt_rrr(dst, lhs, rhs, kind.lane_size())
+            }
+            VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
+                todo!()
+            }
+            VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => todo!(),
+        }
+        Ok(())
+    }
 }
 
 impl MacroAssembler {
