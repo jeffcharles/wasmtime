@@ -375,6 +375,7 @@ macro_rules! def_unsupported {
     (emit F32x4Le $($rest:tt)*) => {};
     (emit F64x2Le $($rest:tt)*) => {};
     (emit I8x16GtS $($rest:tt)*) => {};
+    (emit I16x8GtS $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3189,6 +3190,14 @@ where
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
                 masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_i16x8_gt_s(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
+                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
