@@ -21,8 +21,8 @@
 ;;       movq    %rsi, (%rsp)
 ;;       movdqu  0x2c(%rip), %xmm0
 ;;       movdqu  0x34(%rip), %xmm1
-;;       vpminub %xmm1, %xmm0, %xmm0
-;;       vpcmpeqb %xmm1, %xmm0, %xmm0
+;;       vpminub %xmm0, %xmm1, %xmm1
+;;       vpcmpeqb %xmm0, %xmm1, %xmm1
 ;;       vpcmpeqb %xmm0, %xmm0, %xmm0
 ;;       vpxor   %xmm0, %xmm1, %xmm1
 ;;       movdqa  %xmm1, %xmm0

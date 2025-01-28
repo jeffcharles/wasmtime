@@ -1664,12 +1664,11 @@ impl Masm for MacroAssembler {
             }
             VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
                 // FIXME this explanation doesn't seem correct.
-                // See if each lane is equal to the lower value between the
-                // left and right operands and invert the results.
+                // Set each lane to the lower value and check equality.
                 self.asm
-                    .xmm_vpminu_rrr(writable!(rhs), rhs, lhs, kind.lane_size());
+                    .xmm_vpminu_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
                 self.asm
-                    .xmm_vpcmpeq_rrr(writable!(rhs), rhs, lhs, kind.lane_size());
+                    .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
                 self.asm
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
                 self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
