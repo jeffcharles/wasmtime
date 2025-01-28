@@ -368,6 +368,7 @@ macro_rules! def_unsupported {
     (emit I8x16LeS $($rest:tt)*) => {};
     (emit I16x8LeS $($rest:tt)*) => {};
     (emit I32x4LeS $($rest:tt)*) => {};
+    (emit I64x2LeS $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3116,7 +3117,7 @@ where
 
     fn visit_i16x8_le_s(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
+            .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
                 masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
                 Ok(TypedReg::v128(dst))
             })
@@ -3124,8 +3125,16 @@ where
 
     fn visit_i32x4_le_s(&mut self) -> Self::Output {
         self.context
-            .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
+            .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
                 masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I32x4S)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_i64x2_le_s(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
+                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I64x2S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
