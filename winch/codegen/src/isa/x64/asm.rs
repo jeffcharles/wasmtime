@@ -1765,6 +1765,24 @@ impl Assembler {
             dst: dst.to_reg().into(),
         })
     }
+
+    /// Performs a min operation with vectors of unsigned integers in `lhs` and
+    /// `rhs` and puts the results in `dst`.
+    pub fn xmm_vpminu(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S8 => AvxOpcode::Vpminub,
+            OperandSize::S16 => AvxOpcode::Vpminuw,
+            OperandSize::S32 => AvxOpcode::Vpminud,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: lhs.into(),
+            src2: XmmMemImm::unwrap_new(rhs.into()),
+            dst: dst.to_reg().into(),
+        })
+    }
 }
 
 /// Captures the region in a MachBuffer where an add-with-immediate instruction would be emitted,

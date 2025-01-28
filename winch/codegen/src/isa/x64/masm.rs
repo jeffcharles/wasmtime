@@ -1633,8 +1633,28 @@ impl Masm for MacroAssembler {
             bail!(CodeGenError::UnimplementedForNoAvx)
         }
 
-        // Perform a greater than check with reversed parameters.
-        self.asm.xmm_vpcmpgt_rrr(dst, rhs, lhs, kind.lane_size());
+        match kind {
+            VectorCompareKind::I8x16S
+            | VectorCompareKind::I16x8S
+            | VectorCompareKind::I32x4S
+            | VectorCompareKind::I64x2S => {
+                // Perform a greater than check with reversed parameters.
+                self.asm.xmm_vpcmpgt_rrr(dst, rhs, lhs, kind.lane_size())
+            }
+            VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
+                // FIXME this explanation doesn't seem correct.
+                // See if each lane is equal to the lower value between the
+                // left and right operands and invert the results.
+                self.asm
+                    .xmm_vpminu(writable!(rhs), rhs, lhs, kind.lane_size());
+                self.asm
+                    .xmm_vpcmpeq_rrr(writable!(rhs), rhs, lhs, kind.lane_size());
+                self.asm
+                    .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
+                self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
+            }
+            VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => todo!(),
+        }
         Ok(())
     }
 }
