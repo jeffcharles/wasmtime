@@ -989,6 +989,16 @@ impl Masm for MacroAssembler {
     ) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
+
+    fn vector_ge(
+        &mut self,
+        _dst: WritableReg,
+        _lhs: Reg,
+        _rhs: Reg,
+        _kind: VectorCompareKind,
+    ) -> Result<()> {
+        bail!(CodeGenError::unimplemented_masm_instruction())
+    }
 }
 
 impl MacroAssembler {

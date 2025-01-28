@@ -1774,6 +1774,24 @@ impl Assembler {
         })
     }
 
+    /// Performs a max operation with vectors of signed integers in `lhs` and
+    /// `rhs` and puts the results in `dst`.
+    pub fn xmm_vpmaxs_rrr(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S8 => AvxOpcode::Vpmaxsb,
+            OperandSize::S16 => AvxOpcode::Vpmaxsw,
+            OperandSize::S32 => AvxOpcode::Vpmaxsd,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: lhs.into(),
+            src2: XmmMemImm::unwrap_new(rhs.into()),
+            dst: dst.to_reg().into(),
+        })
+    }
+
     /// Performs a max operation with vectors of unsigned integers in `lhs` and
     /// `rhs` and puts the results in `dst`.
     pub fn xmm_vpmaxu_rrr(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg, size: OperandSize) {
