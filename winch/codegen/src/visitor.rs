@@ -373,6 +373,7 @@ macro_rules! def_unsupported {
     (emit I32x4LeU $($rest:tt)*) => {};
     (emit I64x2LeS $($rest:tt)*) => {};
     (emit F32x4Le $($rest:tt)*) => {};
+    (emit F64x2Le $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3171,6 +3172,14 @@ where
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
                 masm.vector_le(writable!(dst), dst, src, VectorCompareKind::F32x4)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_f64x2_le(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
+                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
