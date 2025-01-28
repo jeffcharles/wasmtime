@@ -166,6 +166,12 @@ impl From<ExtendKind> for ExtMode {
     }
 }
 
+/// Kinds of comparisons supported by `vcmp`.
+pub(super) enum VcmpKind {
+    /// Less than comparison.
+    Lt,
+}
+
 /// Low level assembler implementation for x64.
 pub(crate) struct Assembler {
     /// The machine instruction buffer.
@@ -1782,6 +1788,31 @@ impl Assembler {
             src2: XmmMemImm::unwrap_new(rhs.into()),
             dst: dst.to_reg().into(),
         })
+    }
+
+    pub fn xmm_vcmpp(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        size: OperandSize,
+        kind: VcmpKind,
+    ) {
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vcmpps,
+            OperandSize::S64 => AvxOpcode::Vcmppd,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmRImmVex {
+            op,
+            src1: lhs.into(),
+            src2: XmmMem::unwrap_new(rhs.into()),
+            dst: dst.to_reg().into(),
+            imm: match kind {
+                VcmpKind::Lt => 1,
+            },
+        });
     }
 }
 

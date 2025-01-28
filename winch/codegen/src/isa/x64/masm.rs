@@ -1,7 +1,7 @@
 use super::{
     abi::X64ABI,
     address::Address,
-    asm::{Assembler, PatchableAddToReg},
+    asm::{Assembler, PatchableAddToReg, VcmpKind},
     regs::{self, rbp, rsp},
 };
 use anyhow::{anyhow, bail, Result};
@@ -1653,7 +1653,10 @@ impl Masm for MacroAssembler {
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
                 self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
             }
-            VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => todo!(),
+            VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => {
+                self.asm
+                    .xmm_vcmpp(dst, lhs, rhs, kind.lane_size(), VcmpKind::Lt)
+            }
         }
         Ok(())
     }
