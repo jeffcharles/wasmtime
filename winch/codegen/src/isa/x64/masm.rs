@@ -1646,7 +1646,7 @@ impl Masm for MacroAssembler {
                 // See if each lane is equal to the lower value between the
                 // left and right operands and invert the results.
                 self.asm
-                    .xmm_vpminu(writable!(rhs), rhs, lhs, kind.lane_size());
+                    .xmm_vpminu_rrr(writable!(rhs), rhs, lhs, kind.lane_size());
                 self.asm
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, lhs, kind.lane_size());
                 self.asm
@@ -1655,8 +1655,36 @@ impl Masm for MacroAssembler {
             }
             VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => {
                 self.asm
-                    .xmm_vcmpp(dst, lhs, rhs, kind.lane_size(), VcmpKind::Lt)
+                    .xmm_vcmpp_rrr(dst, lhs, rhs, kind.lane_size(), VcmpKind::Lt)
             }
+        }
+        Ok(())
+    }
+
+    fn vector_le(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        kind: VectorCompareKind,
+    ) -> Result<()> {
+        if !self.flags.has_avx() {
+            bail!(CodeGenError::UnimplementedForNoAvx)
+        }
+
+        match kind {
+            VectorCompareKind::I8x16S
+            | VectorCompareKind::I16x8S
+            | VectorCompareKind::I32x4S
+            | VectorCompareKind::I64x2S => {
+                // Make the values the minimum and then compare them for equality.
+                self.asm.xmm_vpmins_rrr(dst, lhs, rhs, kind.lane_size());
+                self.asm.xmm_vpcmpeq_rrr(dst, rhs, rhs, kind.lane_size());
+            }
+            VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
+                todo!()
+            }
+            VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => todo!(),
         }
         Ok(())
     }

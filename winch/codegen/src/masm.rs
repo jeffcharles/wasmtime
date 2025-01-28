@@ -1507,4 +1507,14 @@ pub(crate) trait MacroAssembler {
         rhs: Reg,
         kind: VectorCompareKind,
     ) -> Result<()>;
+
+    /// Performs a less than or equal comparison with vector registers `lhs`
+    /// and `rhs` and puts the vector of results in `dst`.
+    fn vector_le(
+        &mut self,
+        dst: WritableReg,
+        lhs: Reg,
+        rhs: Reg,
+        kind: VectorCompareKind,
+    ) -> Result<()>;
 }
