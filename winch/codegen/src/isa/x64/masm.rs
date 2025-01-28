@@ -1719,6 +1719,8 @@ impl Masm for MacroAssembler {
                 self.asm.xmm_vpcmpgt_rrr(dst, lhs, rhs, kind.lane_size())
             }
             VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
+                // FIXME figure out correct comment.
+                // Get the max between the operands, check for equality, then invert.
                 self.asm
                     .xmm_vpmaxu_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
                 self.asm
