@@ -1624,15 +1624,11 @@ impl Masm for MacroAssembler {
             | VectorEqualityKind::I16x8
             | VectorEqualityKind::I32x4
             | VectorEqualityKind::I64x2 => {
-                // Perform an equality comparison first.
+                // Check for equality and invert the results.
                 self.asm
                     .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
-
-                // Set a vector register to all true values.
                 self.asm
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
-
-                // Performing a logical xor will invert the equality results.
                 self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
             }
             VectorEqualityKind::F32x4 | VectorEqualityKind::F64x2 => {
