@@ -1775,9 +1775,9 @@ impl Masm for MacroAssembler {
         match kind {
             VectorCompareKind::I8x16S | VectorCompareKind::I16x8S | VectorCompareKind::I32x4S => {
                 // Set each lane to maximum value and then compare for equality.
-                self.asm.xmm_vpmaxs_rrr(dst, lhs, rhs, kind.lane_size());
                 self.asm
-                    .xmm_vpcmpeq_rrr(dst, dst.to_reg(), rhs, kind.lane_size());
+                    .xmm_vpmaxs_rrr(writable!(rhs), lhs, rhs, kind.lane_size());
+                self.asm.xmm_vpcmpeq_rrr(dst, lhs, rhs, kind.lane_size());
             }
             VectorCompareKind::I64x2S => {
                 // FIXME put an explanation here.
