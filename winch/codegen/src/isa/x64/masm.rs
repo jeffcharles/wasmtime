@@ -1780,10 +1780,11 @@ impl Masm for MacroAssembler {
                 self.asm.xmm_vpcmpeq_rrr(dst, lhs, rhs, kind.lane_size());
             }
             VectorCompareKind::I64x2S => {
-                // FIXME put an explanation here.
-                self.asm.xmm_vpcmpgt_rrr(dst, lhs, rhs, kind.lane_size());
+                // Perform a greater than comparison with operands swapped,
+                // then invert the results.
                 self.asm
-                    .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
+                    .xmm_vpcmpgt_rrr(writable!(rhs), rhs, lhs, kind.lane_size());
+                self.asm.xmm_vpcmpeq_rrr(dst, lhs, lhs, kind.lane_size());
                 self.asm.xmm_vpxor_rrr(dst, dst.to_reg(), rhs);
             }
             VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
