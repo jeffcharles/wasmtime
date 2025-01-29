@@ -1742,8 +1742,11 @@ impl Masm for MacroAssembler {
                 self.asm.xmm_vpcmpgt_rrr(dst, lhs, rhs, kind.lane_size())
             }
             VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
-                // FIXME figure out correct comment.
-                // Get the max between the operands, check for equality, then invert.
+                // Set `lhs` to max values, check for equality, then invert the
+                // result.
+                // If `lhs` is larger, then equality check will fail and result
+                // will be inverted to true. Otherwise the equality check will
+                // pass and be inverted to false.
                 self.asm
                     .xmm_vpmaxu_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
                 self.asm
@@ -1752,8 +1755,8 @@ impl Masm for MacroAssembler {
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
                 self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
             }
-            // Do a less than comparison with the operands swapped.
             VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => {
+                // Do a less than comparison with the operands swapped.
                 self.asm
                     .xmm_vcmpp_rrr(dst, rhs, lhs, kind.lane_size(), VcmpKind::Lt)
             }
