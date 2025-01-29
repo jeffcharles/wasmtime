@@ -371,6 +371,7 @@ macro_rules! def_unsupported {
     (emit V128Store32Lane $($rest:tt)*) => {};
     (emit V128Store64Lane $($rest:tt)*) => {};
     (emit F32x4ConvertI32x4S $($rest:tt)*) => {};
+    (emit F32x4ConvertI32x4U $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3092,6 +3093,13 @@ where
     fn visit_f32x4_convert_i32x4_s(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
             masm.v128_convert(reg, writable!(reg), V128ConvertKind::I32x4S)?;
+            Ok(TypedReg::v128(reg))
+        })
+    }
+
+    fn visit_f32x4_convert_i32x4_u(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_convert(reg, writable!(reg), V128ConvertKind::I32x4U)?;
             Ok(TypedReg::v128(reg))
         })
     }

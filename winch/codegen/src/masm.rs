@@ -500,6 +500,16 @@ pub struct LaneSelector {
 pub(crate) enum V128ConvertKind {
     /// 4 lanes of signed 32 bit integers.
     I32x4S,
+    /// 4 lanes of unsigned 32 bit integers.
+    I32x4U,
+}
+
+impl V128ConvertKind {
+    pub(crate) fn lane_size(&self) -> OperandSize {
+        match self {
+            V128ConvertKind::I32x4S | V128ConvertKind::I32x4U => OperandSize::S32,
+        }
+    }
 }
 
 /// Operand size, in bits.

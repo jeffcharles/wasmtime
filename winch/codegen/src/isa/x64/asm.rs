@@ -1925,9 +1925,10 @@ impl Assembler {
     }
 
     /// Converts vector of integers into vector of floating values.
-    pub fn xmm_vcvt_rr(&mut self, src: Reg, dst: WritableReg, kind: V128ConvertKind) {
+    pub fn xmm_vcvt_rr(&mut self, src: Reg, dst: WritableReg, kind: &V128ConvertKind) {
         let op = match kind {
             V128ConvertKind::I32x4S => AvxOpcode::Vcvtdq2ps,
+            _ => unimplemented!(),
         };
 
         self.emit(Inst::XmmUnaryRmRVex {
@@ -1935,6 +1936,66 @@ impl Assembler {
             src: src.into(),
             dst: dst.to_reg().into(),
         });
+    }
+
+    /// Shift vector data left by `imm`.
+    pub fn xmm_vpsll_rr(&mut self, src: Reg, dst: WritableReg, imm: u32, size: OperandSize) {
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vpslld,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src.into(),
+            src2: XmmMemImm::unwrap_new(RegMemImm::imm(imm)),
+            dst: dst.to_reg().into(),
+        });
+    }
+
+    /// Shift vector data right by `imm`.
+    pub fn xmm_vpsrl_rr(&mut self, src: Reg, dst: WritableReg, imm: u32, size: OperandSize) {
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vpsrld,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src.into(),
+            src2: XmmMemImm::unwrap_new(RegMemImm::imm(imm)),
+            dst: dst.to_reg().into(),
+        })
+    }
+
+    /// Subtract integers in vector `src1` from integers in vector `src2`.
+    pub fn xmm_vpsub_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vpsubd,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.to_reg().into(),
+        })
+    }
+
+    /// Add floats in vector `src1` to floats in vector `src2`.
+    pub fn xmm_vaddp_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vaddps,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.to_reg().into(),
+        })
     }
 }
 

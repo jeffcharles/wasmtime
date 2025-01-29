@@ -1674,7 +1674,36 @@ impl Masm for MacroAssembler {
     fn v128_convert(&mut self, src: Reg, dst: WritableReg, kind: V128ConvertKind) -> Result<()> {
         self.ensure_has_avx()?;
         match kind {
-            V128ConvertKind::I32x4S => self.asm.xmm_vcvt_rr(src, dst, kind),
+            V128ConvertKind::I32x4S => self.asm.xmm_vcvt_rr(src, dst, &kind),
+            V128ConvertKind::I32x4U => {
+                let scratch = writable!(regs::scratch_xmm());
+
+                // Split each 32-bit integer into 16-bit parts.
+                // `scratch` will contain the low bits and `dst` will contain
+                // the high bits.
+                self.asm.xmm_vpsll_rr(src, scratch, 0x10, kind.lane_size());
+                self.asm
+                    .xmm_vpsrl_rr(scratch.to_reg(), scratch, 0x10, kind.lane_size());
+                self.asm
+                    .xmm_vpsub_rrr(src, scratch.to_reg(), dst, kind.lane_size());
+
+                // Convert the low bits in `scratch` to floating point numbers.
+                self.asm
+                    .xmm_vcvt_rr(scratch.to_reg(), scratch, &V128ConvertKind::I32x4S);
+
+                // Prevent overflow by right shifting high bits.
+                self.asm
+                    .xmm_vpsrl_rr(dst.to_reg(), dst, 1, kind.lane_size());
+                // Convert high bits in `dst` to floating point numbers.
+                self.asm
+                    .xmm_vcvt_rr(dst.to_reg(), dst, &V128ConvertKind::I32x4S);
+                // Double high bits in `dst` to reverse right shift.
+                self.asm
+                    .xmm_vaddp_rrr(dst.to_reg(), dst.to_reg(), dst, kind.lane_size());
+                // Add high bits in `dst` to low bits in `scratch`.
+                self.asm
+                    .xmm_vaddp_rrr(dst.to_reg(), scratch.to_reg(), dst, kind.lane_size());
+            }
         }
         Ok(())
     }
