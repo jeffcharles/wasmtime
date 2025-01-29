@@ -940,7 +940,7 @@ impl Masm for MacroAssembler {
         Err(anyhow!(CodeGenError::unimplemented_masm_instruction()))
     }
 
-    fn vector_eq(
+    fn v128_eq(
         &mut self,
         _dst: WritableReg,
         _lhs: Reg,
@@ -950,7 +950,7 @@ impl Masm for MacroAssembler {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
 
-    fn vector_ne(
+    fn v128_ne(
         &mut self,
         _dst: WritableReg,
         _lhs: Reg,
@@ -960,7 +960,7 @@ impl Masm for MacroAssembler {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
 
-    fn vector_lt(
+    fn v128_lt(
         &mut self,
         _dst: WritableReg,
         _lhs: Reg,
@@ -970,7 +970,7 @@ impl Masm for MacroAssembler {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
 
-    fn vector_le(
+    fn v128_le(
         &mut self,
         _dst: WritableReg,
         _lhs: Reg,
@@ -980,7 +980,7 @@ impl Masm for MacroAssembler {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
 
-    fn vector_gt(
+    fn v128_gt(
         &mut self,
         _dst: WritableReg,
         _lhs: Reg,
@@ -990,7 +990,7 @@ impl Masm for MacroAssembler {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
 
-    fn vector_ge(
+    fn v128_ge(
         &mut self,
         _dst: WritableReg,
         _lhs: Reg,

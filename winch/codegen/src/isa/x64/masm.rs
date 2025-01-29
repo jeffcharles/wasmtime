@@ -1582,7 +1582,7 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn vector_eq(
+    fn v128_eq(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1608,7 +1608,7 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn vector_ne(
+    fn v128_ne(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1639,7 +1639,7 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn vector_lt(
+    fn v128_lt(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1680,7 +1680,7 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn vector_le(
+    fn v128_le(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1722,7 +1722,7 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn vector_gt(
+    fn v128_gt(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1763,7 +1763,7 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn vector_ge(
+    fn v128_ge(
         &mut self,
         dst: WritableReg,
         lhs: Reg,

@@ -1508,7 +1508,7 @@ pub(crate) trait MacroAssembler {
 
     /// Compares vector registers `lhs` and `rhs` for equality and puts the
     /// vector of results in `dst`.
-    fn vector_eq(
+    fn v128_eq(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1518,7 +1518,7 @@ pub(crate) trait MacroAssembler {
 
     /// Compares vector registers `lhs` and `rhs` for inequality and puts the
     /// vector of results in `dst`.
-    fn vector_ne(
+    fn v128_ne(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1528,7 +1528,7 @@ pub(crate) trait MacroAssembler {
 
     /// Performs a less than comparison with vector registers `lhs` and `rhs`
     /// and puts the vector of results in `dst`.
-    fn vector_lt(
+    fn v128_lt(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1538,7 +1538,7 @@ pub(crate) trait MacroAssembler {
 
     /// Performs a less than or equal comparison with vector registers `lhs`
     /// and `rhs` and puts the vector of results in `dst`.
-    fn vector_le(
+    fn v128_le(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1548,7 +1548,7 @@ pub(crate) trait MacroAssembler {
 
     /// Performs a greater than comparison with vector registers `lhs` and
     /// `rhs` and puts the vector of results in `dst`.
-    fn vector_gt(
+    fn v128_gt(
         &mut self,
         dst: WritableReg,
         lhs: Reg,
@@ -1558,7 +1558,7 @@ pub(crate) trait MacroAssembler {
 
     /// Performs a greater than or equal comparison with vector registers `lhs`
     /// and `rhs` and puts the vector of results in `dst`.
-    fn vector_ge(
+    fn v128_ge(
         &mut self,
         dst: WritableReg,
         lhs: Reg,

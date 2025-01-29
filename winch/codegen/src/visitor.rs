@@ -2963,7 +2963,7 @@ where
     fn visit_i8x16_eq(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::I8x16)?;
+                masm.v128_eq(writable!(dst), dst, src, VectorEqualityKind::I8x16)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -2971,7 +2971,7 @@ where
     fn visit_i16x8_eq(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::I16x8)?;
+                masm.v128_eq(writable!(dst), dst, src, VectorEqualityKind::I16x8)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -2979,7 +2979,7 @@ where
     fn visit_i32x4_eq(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::I32x4)?;
+                masm.v128_eq(writable!(dst), dst, src, VectorEqualityKind::I32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -2987,7 +2987,7 @@ where
     fn visit_i64x2_eq(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::I64x2)?;
+                masm.v128_eq(writable!(dst), dst, src, VectorEqualityKind::I64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -2995,7 +2995,7 @@ where
     fn visit_f32x4_eq(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::F32x4)?;
+                masm.v128_eq(writable!(dst), dst, src, VectorEqualityKind::F32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3003,7 +3003,7 @@ where
     fn visit_f64x2_eq(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_eq(writable!(dst), dst, src, VectorEqualityKind::F64x2)?;
+                masm.v128_eq(writable!(dst), dst, src, VectorEqualityKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3011,7 +3011,7 @@ where
     fn visit_i8x16_ne(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::I8x16)?;
+                masm.v128_ne(writable!(dst), dst, src, VectorEqualityKind::I8x16)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3019,7 +3019,7 @@ where
     fn visit_i16x8_ne(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::I16x8)?;
+                masm.v128_ne(writable!(dst), dst, src, VectorEqualityKind::I16x8)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3027,7 +3027,7 @@ where
     fn visit_i32x4_ne(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::I32x4)?;
+                masm.v128_ne(writable!(dst), dst, src, VectorEqualityKind::I32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3035,7 +3035,7 @@ where
     fn visit_i64x2_ne(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::I64x2)?;
+                masm.v128_ne(writable!(dst), dst, src, VectorEqualityKind::I64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3043,7 +3043,7 @@ where
     fn visit_f32x4_ne(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::F32x4)?;
+                masm.v128_ne(writable!(dst), dst, src, VectorEqualityKind::F32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3051,7 +3051,7 @@ where
     fn visit_f64x2_ne(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_ne(writable!(dst), dst, src, VectorEqualityKind::F64x2)?;
+                masm.v128_ne(writable!(dst), dst, src, VectorEqualityKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3059,7 +3059,7 @@ where
     fn visit_i8x16_lt_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_lt(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
+                masm.v128_lt(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3067,7 +3067,7 @@ where
     fn visit_i8x16_lt_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_lt(writable!(dst), dst, src, VectorCompareKind::I8x16U)?;
+                masm.v128_lt(writable!(dst), dst, src, VectorCompareKind::I8x16U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3075,7 +3075,7 @@ where
     fn visit_i16x8_lt_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_lt(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
+                masm.v128_lt(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3083,7 +3083,7 @@ where
     fn visit_i16x8_lt_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_lt(writable!(dst), dst, src, VectorCompareKind::I16x8U)?;
+                masm.v128_lt(writable!(dst), dst, src, VectorCompareKind::I16x8U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3091,7 +3091,7 @@ where
     fn visit_i32x4_lt_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_lt(writable!(dst), dst, src, VectorCompareKind::I32x4S)?;
+                masm.v128_lt(writable!(dst), dst, src, VectorCompareKind::I32x4S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3099,7 +3099,7 @@ where
     fn visit_i32x4_lt_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_lt(writable!(dst), dst, src, VectorCompareKind::I32x4U)?;
+                masm.v128_lt(writable!(dst), dst, src, VectorCompareKind::I32x4U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3107,7 +3107,7 @@ where
     fn visit_i64x2_lt_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_lt(writable!(dst), dst, src, VectorCompareKind::I64x2S)?;
+                masm.v128_lt(writable!(dst), dst, src, VectorCompareKind::I64x2S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3115,7 +3115,7 @@ where
     fn visit_f32x4_lt(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_lt(writable!(dst), dst, src, VectorCompareKind::F32x4)?;
+                masm.v128_lt(writable!(dst), dst, src, VectorCompareKind::F32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3123,7 +3123,7 @@ where
     fn visit_f64x2_lt(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_lt(writable!(dst), dst, src, VectorCompareKind::F64x2)?;
+                masm.v128_lt(writable!(dst), dst, src, VectorCompareKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3131,7 +3131,7 @@ where
     fn visit_i8x16_le_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
+                masm.v128_le(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3139,7 +3139,7 @@ where
     fn visit_i8x16_le_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I8x16U)?;
+                masm.v128_le(writable!(dst), dst, src, VectorCompareKind::I8x16U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3147,7 +3147,7 @@ where
     fn visit_i16x8_le_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
+                masm.v128_le(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3155,7 +3155,7 @@ where
     fn visit_i16x8_le_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I16x8U)?;
+                masm.v128_le(writable!(dst), dst, src, VectorCompareKind::I16x8U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3163,7 +3163,7 @@ where
     fn visit_i32x4_le_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I32x4S)?;
+                masm.v128_le(writable!(dst), dst, src, VectorCompareKind::I32x4S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3171,7 +3171,7 @@ where
     fn visit_i32x4_le_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I32x4U)?;
+                masm.v128_le(writable!(dst), dst, src, VectorCompareKind::I32x4U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3179,7 +3179,7 @@ where
     fn visit_i64x2_le_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::I64x2S)?;
+                masm.v128_le(writable!(dst), dst, src, VectorCompareKind::I64x2S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3187,7 +3187,7 @@ where
     fn visit_f32x4_le(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::F32x4)?;
+                masm.v128_le(writable!(dst), dst, src, VectorCompareKind::F32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3195,7 +3195,7 @@ where
     fn visit_f64x2_le(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_le(writable!(dst), dst, src, VectorCompareKind::F64x2)?;
+                masm.v128_le(writable!(dst), dst, src, VectorCompareKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3203,7 +3203,7 @@ where
     fn visit_i8x16_gt_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
+                masm.v128_gt(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3211,7 +3211,7 @@ where
     fn visit_i8x16_gt_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I8x16U)?;
+                masm.v128_gt(writable!(dst), dst, src, VectorCompareKind::I8x16U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3219,7 +3219,7 @@ where
     fn visit_i16x8_gt_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
+                masm.v128_gt(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3227,7 +3227,7 @@ where
     fn visit_i16x8_gt_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I16x8U)?;
+                masm.v128_gt(writable!(dst), dst, src, VectorCompareKind::I16x8U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3235,7 +3235,7 @@ where
     fn visit_i32x4_gt_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I32x4S)?;
+                masm.v128_gt(writable!(dst), dst, src, VectorCompareKind::I32x4S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3243,7 +3243,7 @@ where
     fn visit_i32x4_gt_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I32x4U)?;
+                masm.v128_gt(writable!(dst), dst, src, VectorCompareKind::I32x4U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3251,7 +3251,7 @@ where
     fn visit_i64x2_gt_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::I64x2S)?;
+                masm.v128_gt(writable!(dst), dst, src, VectorCompareKind::I64x2S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3259,7 +3259,7 @@ where
     fn visit_f32x4_gt(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::F32x4)?;
+                masm.v128_gt(writable!(dst), dst, src, VectorCompareKind::F32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3267,7 +3267,7 @@ where
     fn visit_f64x2_gt(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_gt(writable!(dst), dst, src, VectorCompareKind::F64x2)?;
+                masm.v128_gt(writable!(dst), dst, src, VectorCompareKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3275,7 +3275,7 @@ where
     fn visit_i8x16_ge_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_ge(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
+                masm.v128_ge(writable!(dst), dst, src, VectorCompareKind::I8x16S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3283,7 +3283,7 @@ where
     fn visit_i8x16_ge_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S8, |masm, dst, src, _size| {
-                masm.vector_ge(writable!(dst), dst, src, VectorCompareKind::I8x16U)?;
+                masm.v128_ge(writable!(dst), dst, src, VectorCompareKind::I8x16U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3291,7 +3291,7 @@ where
     fn visit_i16x8_ge_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_ge(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
+                masm.v128_ge(writable!(dst), dst, src, VectorCompareKind::I16x8S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3299,7 +3299,7 @@ where
     fn visit_i16x8_ge_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.vector_ge(writable!(dst), dst, src, VectorCompareKind::I16x8U)?;
+                masm.v128_ge(writable!(dst), dst, src, VectorCompareKind::I16x8U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3307,7 +3307,7 @@ where
     fn visit_i32x4_ge_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_ge(writable!(dst), dst, src, VectorCompareKind::I32x4S)?;
+                masm.v128_ge(writable!(dst), dst, src, VectorCompareKind::I32x4S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3315,7 +3315,7 @@ where
     fn visit_i32x4_ge_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_ge(writable!(dst), dst, src, VectorCompareKind::I32x4U)?;
+                masm.v128_ge(writable!(dst), dst, src, VectorCompareKind::I32x4U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3323,7 +3323,7 @@ where
     fn visit_i64x2_ge_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
-                masm.vector_ge(writable!(dst), dst, src, VectorCompareKind::I64x2S)?;
+                masm.v128_ge(writable!(dst), dst, src, VectorCompareKind::I64x2S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3331,7 +3331,7 @@ where
     fn visit_f32x4_ge(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_ge(writable!(dst), dst, src, VectorCompareKind::F32x4)?;
+                masm.v128_ge(writable!(dst), dst, src, VectorCompareKind::F32x4)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3339,7 +3339,7 @@ where
     fn visit_f64x2_ge(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.vector_ge(writable!(dst), dst, src, VectorCompareKind::F64x2)?;
+                masm.v128_ge(writable!(dst), dst, src, VectorCompareKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }
