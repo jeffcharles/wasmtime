@@ -496,6 +496,12 @@ pub struct LaneSelector {
     pub size: OperandSize,
 }
 
+/// Types of vector integer to float conversions supported by WebAssembly.
+pub(crate) enum V128ConvertKind {
+    /// 4 lanes of signed 32 bit integers.
+    I32x4S,
+}
+
 /// Operand size, in bits.
 #[derive(Copy, Debug, Clone, Eq, PartialEq)]
 pub(crate) enum OperandSize {
@@ -1520,4 +1526,7 @@ pub(crate) trait MacroAssembler {
 
     /// If any bit in `src` is 1, set `dst` to 1, or 0 otherwise.
     fn v128_any_true(&mut self, src: Reg, dst: WritableReg) -> Result<()>;
+
+    /// Convert vector of integers to vector of floating points.
+    fn v128_convert(&mut self, src: Reg, dst: WritableReg, kind: V128ConvertKind) -> Result<()>;
 }

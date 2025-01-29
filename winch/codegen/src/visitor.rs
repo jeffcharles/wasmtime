@@ -13,7 +13,7 @@ use crate::masm::{
     DivKind, Extend, ExtractLaneKind, FloatCmpKind, IntCmpKind, LoadKind, MacroAssembler,
     MemMoveDirection, MulWideKind, OperandSize, RegImm, RemKind, ReplaceLaneKind, RmwOp,
     RoundingMode, SPOffset, ShiftKind, Signed, SplatKind, SplatLoadKind, StoreKind, TruncKind,
-    VectorExtendKind, Zero,
+    V128ConvertKind, VectorExtendKind, Zero,
 };
 
 use crate::reg::{writable, Reg};
@@ -370,6 +370,7 @@ macro_rules! def_unsupported {
     (emit V128Store16Lane $($rest:tt)*) => {};
     (emit V128Store32Lane $($rest:tt)*) => {};
     (emit V128Store64Lane $($rest:tt)*) => {};
+    (emit F32x4ConvertI32x4S $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3086,6 +3087,13 @@ where
 
     fn visit_v128_store64_lane(&mut self, arg: MemArg, lane: u8) -> Self::Output {
         self.emit_wasm_store(&arg, StoreKind::vector_lane(lane, OperandSize::S64))
+    }
+
+    fn visit_f32x4_convert_i32x4_s(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_convert(reg, writable!(reg), V128ConvertKind::I32x4S)?;
+            Ok(TypedReg::v128(reg))
+        })
     }
 
     wasmparser::for_each_visit_simd_operator!(def_unsupported);

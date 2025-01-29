@@ -9,8 +9,8 @@ use anyhow::{anyhow, bail, Result};
 use crate::masm::{
     DivKind, Extend, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I, IntCmpKind, LaneSelector,
     LoadKind, MacroAssembler as Masm, MulWideKind, OperandSize, RegImm, RemKind, ReplaceLaneKind,
-    RmwOp, RoundingMode, ShiftKind, SplatKind, StoreKind, TrapCode, TruncKind, Zero, TRUSTED_FLAGS,
-    UNTRUSTED_FLAGS,
+    RmwOp, RoundingMode, ShiftKind, SplatKind, StoreKind, TrapCode, TruncKind, V128ConvertKind,
+    Zero, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
 };
 use crate::{
     abi::{self, align_to, calculate_frame_adjustment, LocalSlot},
@@ -1668,6 +1668,14 @@ impl Masm for MacroAssembler {
         self.ensure_has_avx()?;
         self.asm.xmm_vptest(src, src);
         self.asm.setcc(IntCmpKind::Ne, dst);
+        Ok(())
+    }
+
+    fn v128_convert(&mut self, src: Reg, dst: WritableReg, kind: V128ConvertKind) -> Result<()> {
+        self.ensure_has_avx()?;
+        match kind {
+            V128ConvertKind::I32x4S => self.asm.xmm_vcvt_rr(src, dst, kind),
+        }
         Ok(())
     }
 }

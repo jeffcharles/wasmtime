@@ -4,7 +4,7 @@ use crate::{
     isa::{reg::Reg, CallingConvention},
     masm::{
         DivKind, Extend, ExtendKind, ExtendType, IntCmpKind, MulWideKind, OperandSize, RemKind,
-        RoundingMode, ShiftKind, Signed, VectorExtendKind, Zero,
+        RoundingMode, ShiftKind, Signed, V128ConvertKind, VectorExtendKind, Zero,
     },
     reg::writable,
     x64::regs::scratch,
@@ -1922,6 +1922,19 @@ impl Assembler {
         });
 
         Ok(())
+    }
+
+    /// Converts vector of integers into vector of floating values.
+    pub fn xmm_vcvt_rr(&mut self, src: Reg, dst: WritableReg, kind: V128ConvertKind) {
+        let op = match kind {
+            V128ConvertKind::I32x4S => AvxOpcode::Vcvtdq2ps,
+        };
+
+        self.emit(Inst::XmmUnaryRmRVex {
+            op,
+            src: src.into(),
+            dst: dst.to_reg().into(),
+        });
     }
 }
 
