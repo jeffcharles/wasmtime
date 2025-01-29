@@ -276,6 +276,11 @@ macro_rules! for_each_op {
             /// Same as `xadd64` but `src2` is a zero-extended 32-bit immediate.
             xadd64_u32 = Xadd64U32 { dst: XReg, src1: XReg, src2: u32 };
 
+            /// `low32(dst) = low32(src1) * low32(src2) + low32(src3)`
+            xmadd32 = Xmadd32 { dst: XReg, src1: XReg, src2: XReg, src3: XReg };
+            /// `dst = src1 * src2 + src3`
+            xmadd64 = Xmadd64 { dst: XReg, src1: XReg, src2: XReg, src3: XReg };
+
             /// 32-bit wrapping subtraction: `low32(dst) = low32(src1) - low32(src2)`.
             ///
             /// The upper 32-bits of `dst` are unmodified.
@@ -612,12 +617,32 @@ macro_rules! for_each_op {
             /// `dst = low32(cond) ? if_nonzero : if_zero`
             xselect64 = XSelect64 { dst: XReg, cond: XReg, if_nonzero: XReg, if_zero: XReg };
 
-            /// `trapif(addr > *(bound_ptr + bound_off) - size)` (unsigned)
+            /// `trapif(addr > bound_ptr - size)` (unsigned)
             xbc32_bound_trap = XBc32BoundTrap {
+                addr: XReg,
+                bound: XReg,
+                size: u8
+            };
+            /// `trapif(addr > *(bound_ptr + bound_off) - size)` (unsigned)
+            ///
+            /// Note that the `bound_ptr + bound_off` load loads a
+            /// host-native-endian pointer-sized value.
+            xbc32_boundne_trap = XBc32BoundNeTrap {
                 addr: XReg,
                 bound_ptr: XReg,
                 bound_off: u8,
                 size: u8
+            };
+            /// `trapif(addr >= bound_ptr)` (unsigned)
+            xbc32_strict_bound_trap = XBc32StrictBoundTrap {
+                addr: XReg,
+                bound: XReg
+            };
+            /// `trapif(addr >= *(bound_ptr + bound_off))` (unsigned)
+            xbc32_strict_boundne_trap = XBc32StrictBoundNeTrap {
+                addr: XReg,
+                bound_ptr: XReg,
+                bound_off: u8
             };
         }
     };

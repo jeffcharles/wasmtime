@@ -6,13 +6,12 @@ use crate::imms::*;
 use crate::profile::{ExecutingPc, ExecutingPcRef};
 use crate::regs::*;
 use alloc::string::ToString;
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 use core::fmt;
 use core::mem;
 use core::ops::ControlFlow;
 use core::ops::{Index, IndexMut};
 use core::ptr::NonNull;
-use sptr::Strict;
 use wasmtime_math::WasmFloat;
 mod debug;
 #[cfg(all(not(pulley_tail_calls), not(pulley_assume_llvm_makes_tail_calls)))]
@@ -37,13 +36,13 @@ impl Default for Vm {
 impl Vm {
     /// Create a new virtual machine with the default stack size.
     pub fn new() -> Self {
-        Self::with_stack(vec![0; DEFAULT_STACK_SIZE])
+        Self::with_stack(DEFAULT_STACK_SIZE)
     }
 
     /// Create a new virtual machine with the given stack.
-    pub fn with_stack(stack: Vec<u8>) -> Self {
+    pub fn with_stack(stack_size: usize) -> Self {
         Self {
-            state: MachineState::with_stack(stack),
+            state: MachineState::with_stack(stack_size),
             executing_pc: ExecutingPc::default(),
         }
     }
@@ -56,11 +55,6 @@ impl Vm {
     /// Get an exclusive reference to this VM's machine state.
     pub fn state_mut(&mut self) -> &mut MachineState {
         &mut self.state
-    }
-
-    /// Consumer this VM and return its stack storage.
-    pub fn into_stack(mut self) -> Vec<u8> {
-        mem::take(&mut self.state.stack)
     }
 
     /// Call a bytecode function.
@@ -404,7 +398,18 @@ union XRegUnion {
     u32: u32,
     i64: i64,
     u64: u64,
-    ptr: *mut u8,
+
+    // Note that this is intentionally `usize` and not an actual pointer like
+    // `*mut u8`. The reason for this is that provenance is required in Rust for
+    // pointers but Cranelift has no pointer type and thus no concept of
+    // provenance. That means that at-rest it's not known whether the value has
+    // provenance or not and basically means that Pulley is required to use
+    // "permissive provenance" in Rust as opposed to strict provenance.
+    //
+    // That's more-or-less a long-winded way of saying that storage of a pointer
+    // in this value is done with `.expose_provenance()` and reading a pointer
+    // uses `with_exposed_provenance_mut(..)`.
+    ptr: usize,
 }
 
 impl Default for XRegVal {
@@ -467,7 +472,11 @@ impl XRegVal {
 
     pub fn get_ptr<T>(&self) -> *mut T {
         let ptr = unsafe { self.0.ptr };
-        Strict::map_addr(ptr, |p| usize::from_le(p)).cast()
+        let ptr = usize::from_le(ptr);
+        #[cfg(has_provenance_apis)]
+        return core::ptr::with_exposed_provenance_mut(ptr);
+        #[cfg(not(has_provenance_apis))]
+        return ptr as *mut T;
     }
 
     pub fn set_i32(&mut self, x: i32) {
@@ -487,7 +496,11 @@ impl XRegVal {
     }
 
     pub fn set_ptr<T>(&mut self, ptr: *mut T) {
-        self.0.ptr = Strict::map_addr(ptr, |p| p.to_le()).cast();
+        #[cfg(has_provenance_apis)]
+        let ptr = ptr.expose_provenance();
+        #[cfg(not(has_provenance_apis))]
+        let ptr = ptr as usize;
+        self.0.ptr = ptr.to_le();
     }
 }
 
@@ -723,12 +736,68 @@ pub struct MachineState {
     v_regs: [VRegVal; VReg::RANGE.end as usize],
     fp: *mut u8,
     lr: *mut u8,
-    stack: Vec<u8>,
+    stack: Stack,
     done_reason: Option<DoneReason<()>>,
 }
 
 unsafe impl Send for MachineState {}
 unsafe impl Sync for MachineState {}
+
+/// Helper structure to store the state of the Pulley stack.
+///
+/// The Pulley stack notably needs to be a 16-byte aligned allocation on the
+/// host to ensure that addresses handed out are indeed 16-byte aligned. This is
+/// done with a custom `Vec<T>` internally where `T` has size and align of 16.
+/// This is manually done with a helper `Align16` type below.
+struct Stack {
+    storage: Vec<Align16>,
+}
+
+/// Helper type used with `Stack` above.
+#[derive(Copy, Clone)]
+#[repr(align(16))]
+struct Align16 {
+    // Just here to give the structure a size of 16. The alignment is always 16
+    // regardless of what the host platform's alignment of u128 is.
+    _unused: u128,
+}
+
+impl Stack {
+    /// Creates a new stack which will have a byte size of at least `size`.
+    ///
+    /// The allocated stack might be slightly larger due to rounding necessary.
+    fn new(size: usize) -> Stack {
+        Stack {
+            // Round up `size` to the nearest multiple of 16. Note that the
+            // stack is also allocated here but not initialized, and that's
+            // intentional as pulley bytecode should always initialize the stack
+            // before use.
+            storage: Vec::with_capacity((size + 15) / 16),
+        }
+    }
+
+    /// Returns a pointer to the top of the stack (the highest address).
+    ///
+    /// Note that the returned pointer has provenance for the entire stack
+    /// allocation, however, not just the top.
+    fn top(&mut self) -> *mut u8 {
+        let len = self.len();
+        unsafe { self.base().add(len) }
+    }
+
+    /// Returns a pointer to the base of the stack (the lowest address).
+    ///
+    /// Note that the returned pointer has provenance for the entire stack
+    /// allocation, however, not just the top.
+    fn base(&mut self) -> *mut u8 {
+        self.storage.as_mut_ptr().cast::<u8>()
+    }
+
+    /// Returns the length, in bytes, of this stack allocation.
+    fn len(&self) -> usize {
+        self.storage.capacity() * mem::size_of::<Align16>()
+    }
+}
 
 impl fmt::Debug for MachineState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -811,24 +880,18 @@ index_reg!(VReg, VRegVal, v_regs);
 const HOST_RETURN_ADDR: *mut u8 = usize::MAX as *mut u8;
 
 impl MachineState {
-    fn with_stack(stack: Vec<u8>) -> Self {
-        assert!(stack.len() > 0);
+    fn with_stack(stack_size: usize) -> Self {
         let mut state = Self {
             x_regs: [Default::default(); XReg::RANGE.end as usize],
             f_regs: Default::default(),
             v_regs: Default::default(),
-            stack,
+            stack: Stack::new(stack_size),
             done_reason: None,
             fp: HOST_RETURN_ADDR,
             lr: HOST_RETURN_ADDR,
         };
 
-        // Take care to construct SP such that we preserve pointer provenance
-        // for the whole stack.
-        let len = state.stack.len();
-        let sp = &mut state.stack[..];
-        let sp = sp.as_mut_ptr();
-        let sp = unsafe { sp.add(len) };
+        let sp = state.stack.top();
         state[XReg::sp] = XRegVal::new_ptr(sp);
 
         state
@@ -987,7 +1050,7 @@ impl Interpreter<'_> {
     #[must_use]
     fn set_sp<I: Encode>(&mut self, sp: *mut u8) -> ControlFlow<Done> {
         let sp_raw = sp as usize;
-        let base_raw = self.state.stack.as_ptr() as usize;
+        let base_raw = self.state.stack.base() as usize;
         if sp_raw < base_raw {
             return self.done_trap::<I>();
         }
@@ -1000,7 +1063,7 @@ impl Interpreter<'_> {
     fn set_sp_unchecked<T>(&mut self, sp: *mut T) {
         if cfg!(debug_assertions) {
             let sp_raw = sp as usize;
-            let base = self.state.stack.as_ptr() as usize;
+            let base = self.state.stack.base() as usize;
             let end = base + self.state.stack.len();
             assert!(base <= sp_raw && sp_raw <= end);
         }
@@ -1075,7 +1138,7 @@ impl Interpreter<'_> {
 
 #[test]
 fn simple_push_pop() {
-    let mut state = MachineState::with_stack(vec![0; 16]);
+    let mut state = MachineState::with_stack(16);
     let pc = ExecutingPc::default();
     unsafe {
         let mut bytecode = [0; 10];
@@ -1517,6 +1580,22 @@ impl OpVisitor for Interpreter<'_> {
     fn xadd64_u32(&mut self, dst: XReg, src1: XReg, src2: u32) -> ControlFlow<Done> {
         let a = self.state[src1].get_u64();
         self.state[dst].set_u64(a.wrapping_add(src2.into()));
+        ControlFlow::Continue(())
+    }
+
+    fn xmadd32(&mut self, dst: XReg, src1: XReg, src2: XReg, src3: XReg) -> ControlFlow<Done> {
+        let a = self.state[src1].get_u32();
+        let b = self.state[src2].get_u32();
+        let c = self.state[src3].get_u32();
+        self.state[dst].set_u32(a.wrapping_mul(b).wrapping_add(c));
+        ControlFlow::Continue(())
+    }
+
+    fn xmadd64(&mut self, dst: XReg, src1: XReg, src2: XReg, src3: XReg) -> ControlFlow<Done> {
+        let a = self.state[src1].get_u64();
+        let b = self.state[src2].get_u64();
+        let c = self.state[src3].get_u64();
+        self.state[dst].set_u64(a.wrapping_mul(b).wrapping_add(c));
         ControlFlow::Continue(())
     }
 
@@ -2459,7 +2538,17 @@ impl OpVisitor for Interpreter<'_> {
         ControlFlow::Continue(())
     }
 
-    fn xbc32_bound_trap(
+    fn xbc32_bound_trap(&mut self, addr: XReg, bound: XReg, size: u8) -> ControlFlow<Done> {
+        let bound = self.state[bound].get_u64() as usize;
+        let addr = self.state[addr].get_u32() as usize;
+        if addr > bound.wrapping_sub(usize::from(size)) {
+            self.done_trap::<crate::XBc32BoundTrap>()
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn xbc32_boundne_trap(
         &mut self,
         addr: XReg,
         bound_ptr: XReg,
@@ -2469,7 +2558,32 @@ impl OpVisitor for Interpreter<'_> {
         let bound = unsafe { self.load::<usize>(bound_ptr, bound_off.into()) };
         let addr = self.state[addr].get_u32() as usize;
         if addr > bound.wrapping_sub(usize::from(size)) {
-            self.done_trap::<crate::XBc32BoundTrap>()
+            self.done_trap::<crate::XBc32BoundNeTrap>()
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn xbc32_strict_bound_trap(&mut self, addr: XReg, bound: XReg) -> ControlFlow<Done> {
+        let bound = self.state[bound].get_u64() as usize;
+        let addr = self.state[addr].get_u32() as usize;
+        if addr >= bound {
+            self.done_trap::<crate::XBc32StrictBoundTrap>()
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn xbc32_strict_boundne_trap(
+        &mut self,
+        addr: XReg,
+        bound_ptr: XReg,
+        bound_off: u8,
+    ) -> ControlFlow<Done> {
+        let bound = unsafe { self.load::<usize>(bound_ptr, bound_off.into()) };
+        let addr = self.state[addr].get_u32() as usize;
+        if addr >= bound {
+            self.done_trap::<crate::XBc32StrictBoundNeTrap>()
         } else {
             ControlFlow::Continue(())
         }

@@ -94,6 +94,18 @@ impl From<Reg> for Xmm {
     }
 }
 
+impl From<Reg> for XmmMem {
+    fn from(value: Reg) -> Self {
+        XmmMem::unwrap_new(value.into())
+    }
+}
+
+impl From<Reg> for XmmMemImm {
+    fn from(value: Reg) -> Self {
+        XmmMemImm::unwrap_new(value.into())
+    }
+}
+
 impl From<OperandSize> for args::OperandSize {
     fn from(size: OperandSize) -> Self {
         match size {
@@ -1549,7 +1561,7 @@ impl Assembler {
 
     /// Emits a conditional jump to the given label.
     pub fn jmp_if(&mut self, cc: impl Into<CC>, taken: MachLabel) {
-        self.emit(Inst::JmpIf {
+        self.emit(Inst::WinchJmpIf {
             cc: cc.into(),
             taken,
         });
@@ -1713,20 +1725,215 @@ impl Assembler {
 
     /// Extract a value from `src` into `dst` (zero extended) determined by `lane`.
     pub fn xmm_vpextr_rr(&mut self, dst: WritableReg, src: Reg, lane: u8, size: OperandSize) {
-        let op = match size {
+        self.emit(Inst::XmmToGprImmVex {
+            op: Self::vpextr_opcode(size),
+            src: src.into(),
+            dst: dst.to_reg().into(),
+            imm: lane,
+        });
+    }
+
+    /// Copy value from `src2`, merge into `src1`, and put result in `dst` at
+    /// the location specified in `count`.
+    pub fn xmm_vpinsr_rrm(
+        &mut self,
+        dst: WritableReg,
+        src1: Reg,
+        src2: &Address,
+        count: u8,
+        size: OperandSize,
+    ) {
+        let src2 = Self::to_synthetic_amode(
+            src2,
+            &mut self.pool,
+            &mut self.constants,
+            &mut self.buffer,
+            MemFlags::trusted(),
+        );
+
+        self.emit(Inst::XmmVexPinsr {
+            op: Self::vpinsr_opcode(size),
+            src1: src1.into(),
+            src2: GprMem::unwrap_new(RegMem::mem(src2)),
+            dst: dst.to_reg().into(),
+            imm: count,
+        });
+    }
+
+    /// Copy value from `src2`, merge into `src1`, and put result in `dst` at
+    /// the location specified in `count`.
+    pub fn xmm_vpinsr_rrr(
+        &mut self,
+        dst: WritableReg,
+        src1: Reg,
+        src2: Reg,
+        count: u8,
+        size: OperandSize,
+    ) {
+        self.emit(Inst::XmmVexPinsr {
+            op: Self::vpinsr_opcode(size),
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.to_reg().into(),
+            imm: count,
+        });
+    }
+
+    /// Copy a 32-bit float in `src2`, merge into `src1`, and put result in `dst`.
+    pub fn xmm_vinsertps_rrm(&mut self, dst: WritableReg, src1: Reg, src2: &Address, imm: u8) {
+        let src2 = Self::to_synthetic_amode(
+            src2,
+            &mut self.pool,
+            &mut self.constants,
+            &mut self.buffer,
+            MemFlags::trusted(),
+        );
+
+        self.emit(Inst::XmmRmRImmVex {
+            op: AvxOpcode::Vinsertps,
+            src1: src1.into(),
+            src2: XmmMem::unwrap_new(RegMem::mem(src2)),
+            dst: dst.to_reg().into(),
+            imm,
+        });
+    }
+
+    /// Copy a 32-bit float in `src2`, merge into `src1`, and put result in `dst`.
+    pub fn xmm_vinsertps_rrr(&mut self, dst: WritableReg, src1: Reg, src2: Reg, imm: u8) {
+        self.emit(Inst::XmmRmRImmVex {
+            op: AvxOpcode::Vinsertps,
+            src1: src1.into(),
+            src2: XmmMem::unwrap_new(RegMem::reg(src2.into())),
+            dst: dst.to_reg().into(),
+            imm,
+        });
+    }
+
+    /// Moves lower 64-bit float from `src2` into lower 64-bits of `dst` and the
+    /// upper 64-bits in `src1` into the upper 64-bits of `dst`.
+    pub fn xmm_vmovsd_rrr(&mut self, dst: WritableReg, src1: Reg, src2: Reg) {
+        self.emit(Inst::XmmRmiRVex {
+            op: AvxOpcode::Vmovsd,
+            src1: src1.into(),
+            src2: XmmMemImm::unwrap_new(src2.into()),
+            dst: dst.to_reg().into(),
+        })
+    }
+
+    /// Moves 64-bit float from `src` into lower 64-bits of `dst`.
+    pub fn xmm_vmovsd_rm(&mut self, dst: WritableReg, src: &Address) {
+        let src = Self::to_synthetic_amode(
+            src,
+            &mut self.pool,
+            &mut self.constants,
+            &mut self.buffer,
+            MemFlags::trusted(),
+        );
+
+        self.emit(Inst::XmmUnaryRmRVex {
+            op: AvxOpcode::Vmovsd,
+            src: XmmMem::unwrap_new(RegMem::mem(src)),
+            dst: dst.to_reg().into(),
+        })
+    }
+
+    /// Moves two 32-bit floats from `src2` to the upper 64-bits of `dst`.
+    /// Copies two 32-bit floats from the lower 64-bits of `src1` to lower
+    /// 64-bits of `dst`.
+    pub fn xmm_vmovlhps_rrm(&mut self, dst: WritableReg, src1: Reg, src2: &Address) {
+        let src2 = Self::to_synthetic_amode(
+            src2,
+            &mut self.pool,
+            &mut self.constants,
+            &mut self.buffer,
+            MemFlags::trusted(),
+        );
+
+        self.emit(Inst::XmmRmiRVex {
+            op: AvxOpcode::Vmovlhps,
+            src1: src1.into(),
+            src2: XmmMemImm::unwrap_new(RegMemImm::mem(src2)),
+            dst: dst.to_reg().into(),
+        });
+    }
+
+    /// Moves two 32-bit floats from the lower 64-bits of `src2` to the upper
+    /// 64-bits of `dst`. Copies two 32-bit floats from the lower 64-bits of
+    /// `src1` to lower 64-bits of `dst`.
+    pub fn xmm_vmovlhps_rrr(&mut self, dst: WritableReg, src1: Reg, src2: Reg) {
+        self.emit(Inst::XmmRmiRVex {
+            op: AvxOpcode::Vmovlhps,
+            src1: src1.into(),
+            src2: XmmMemImm::unwrap_new(src2.into()),
+            dst: dst.to_reg().into(),
+        });
+    }
+
+    /// The `vpinsr` opcode to use.
+    fn vpinsr_opcode(size: OperandSize) -> AvxOpcode {
+        match size {
+            OperandSize::S8 => AvxOpcode::Vpinsrb,
+            OperandSize::S16 => AvxOpcode::Vpinsrw,
+            OperandSize::S32 => AvxOpcode::Vpinsrd,
+            OperandSize::S64 => AvxOpcode::Vpinsrq,
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn xmm_rmi_rvex(&mut self, op: AvxOpcode, src1: Reg, src2: Reg, dst: WritableReg) {
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.map(Into::into),
+        })
+    }
+
+    pub fn xmm_vptest(&mut self, src1: Reg, src2: Reg) {
+        self.emit(Inst::XmmCmpRmRVex {
+            op: AvxOpcode::Vptest,
+            src1: src1.into(),
+            src2: src2.into(),
+        })
+    }
+
+    /// The `vpextr` opcode to use.
+    fn vpextr_opcode(size: OperandSize) -> AvxOpcode {
+        match size {
             OperandSize::S8 => AvxOpcode::Vpextrb,
             OperandSize::S16 => AvxOpcode::Vpextrw,
             OperandSize::S32 => AvxOpcode::Vpextrd,
             OperandSize::S64 => AvxOpcode::Vpextrq,
             _ => unimplemented!(),
-        };
+        }
+    }
 
-        self.emit(Inst::XmmToGprImmVex {
-            op,
+    /// Extract a value from `src` into `addr` determined by `lane`.
+    pub(crate) fn xmm_vpextr_rm(
+        &mut self,
+        addr: &Address,
+        src: Reg,
+        lane: u8,
+        size: OperandSize,
+        flags: MemFlags,
+    ) -> anyhow::Result<()> {
+        assert!(addr.is_offset());
+        let dst = Self::to_synthetic_amode(
+            addr,
+            &mut self.pool,
+            &mut self.constants,
+            &mut self.buffer,
+            flags,
+        );
+
+        self.emit(Inst::XmmMovRMImmVex {
+            op: Self::vpextr_opcode(size),
             src: src.into(),
-            dst: dst.to_reg().into(),
+            dst,
             imm: lane,
         });
+
+        Ok(())
     }
 
     /// Compare vector registers `lhs` and `rhs` for equality between packed

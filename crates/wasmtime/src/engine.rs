@@ -8,6 +8,7 @@ use crate::runtime::vm::GcRuntime;
 use crate::sync::OnceLock;
 use crate::Config;
 use alloc::sync::Arc;
+#[cfg(target_has_atomic = "64")]
 use core::sync::atomic::{AtomicU64, Ordering};
 #[cfg(any(feature = "cranelift", feature = "winch"))]
 use object::write::{Object, StandardSegment};
@@ -61,13 +62,21 @@ struct EngineInner {
     profiler: Box<dyn crate::profiling_agent::ProfilingAgent>,
     #[cfg(feature = "runtime")]
     signatures: TypeRegistry,
-    #[cfg(feature = "runtime")]
+    #[cfg(all(feature = "runtime", target_has_atomic = "64"))]
     epoch: AtomicU64,
 
     /// One-time check of whether the compiler's settings, if present, are
     /// compatible with the native host.
     #[cfg(any(feature = "cranelift", feature = "winch"))]
     compatible_with_native_host: OnceLock<Result<(), String>>,
+}
+
+impl core::fmt::Debug for Engine {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("Engine")
+            .field(&Arc::as_ptr(&self.inner))
+            .finish()
+    }
 }
 
 impl Default for Engine {
@@ -102,7 +111,7 @@ impl Engine {
             #[cfg(has_native_signals)]
             crate::runtime::vm::init_traps(config.macos_use_mach_ports);
             if !cfg!(miri) {
-                #[cfg(feature = "debug-builtins")]
+                #[cfg(all(has_host_compiler_backend, feature = "debug-builtins"))]
                 crate::runtime::vm::debug_builtins::init();
             }
         }
@@ -122,7 +131,7 @@ impl Engine {
                 profiler: config.build_profiler()?,
                 #[cfg(feature = "runtime")]
                 signatures: TypeRegistry::new(),
-                #[cfg(feature = "runtime")]
+                #[cfg(all(feature = "runtime", target_has_atomic = "64"))]
                 epoch: AtomicU64::new(0),
                 #[cfg(any(feature = "cranelift", feature = "winch"))]
                 compatible_with_native_host: OnceLock::new(),
@@ -300,6 +309,18 @@ impl Engine {
             for (key, value) in compiler.isa_flags().iter() {
                 self.check_compatible_with_isa_flag(key, value)?;
             }
+        }
+
+        // Double-check that this configuration isn't requesting capabilities
+        // that this build of Wasmtime doesn't support.
+        if !cfg!(has_native_signals) && self.tunables().signals_based_traps {
+            return Err("signals-based-traps disabled at compile time -- cannot be enabled".into());
+        }
+        if !cfg!(has_virtual_memory) && self.tunables().memory_init_cow {
+            return Err("virtual memory disabled at compile time -- cannot enable CoW".into());
+        }
+        if !cfg!(target_has_atomic = "64") && self.tunables().epoch_interruption {
+            return Err("epochs currently require 64-bit atomics".into());
         }
         Ok(())
     }
@@ -675,10 +696,12 @@ impl Engine {
         self.config().custom_code_memory.as_ref()
     }
 
+    #[cfg(target_has_atomic = "64")]
     pub(crate) fn epoch_counter(&self) -> &AtomicU64 {
         &self.inner.epoch
     }
 
+    #[cfg(target_has_atomic = "64")]
     pub(crate) fn current_epoch(&self) -> u64 {
         self.epoch_counter().load(Ordering::Relaxed)
     }
@@ -708,6 +731,7 @@ impl Engine {
     /// This method is signal-safe: it does not make any syscalls, and
     /// performs only an atomic increment to the epoch value in
     /// memory.
+    #[cfg(target_has_atomic = "64")]
     pub fn increment_epoch(&self) {
         self.inner.epoch.fetch_add(1, Ordering::Relaxed);
     }

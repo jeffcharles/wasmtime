@@ -169,6 +169,9 @@ authors = ["The Wasmtime Project Developers"]
 edition = "2021"
 # Wasmtime's current policy is that this number can be no larger than the
 # current stable release of Rust minus 2.
+#
+# NB: once this is 1.84+ delete `pulley/build.rs` and the similar code in
+# `crate/wasmtime/build.rs`
 rust-version = "1.82.0"
 
 [workspace.lints.rust]
@@ -442,6 +445,7 @@ wmemcheck = ["wasmtime/wmemcheck"]
 trace-log = ["wasmtime/trace-log"]
 memory-protection-keys = ["wasmtime-cli-flags/memory-protection-keys"]
 profile-pulley = ["wasmtime/profile-pulley"]
+component-model-async = ["wasmtime-cli-flags/component-model-async", "component-model"]
 
 # This feature, when enabled, will statically compile out all logging statements
 # throughout Wasmtime and its dependencies.
@@ -501,10 +505,6 @@ run = [
   "wasmtime-cli-flags/async",
 ]
 completion = ["dep:clap_complete"]
-
-[[test]]
-name = "host_segfault"
-harness = false
 
 [[test]]
 name = "disas"

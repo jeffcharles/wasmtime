@@ -12,7 +12,7 @@ use crate::store::{StoreOpaque, Stored};
 use crate::{AsContextMut, Engine, Module, StoreContextMut};
 use alloc::sync::Arc;
 use core::marker;
-use core::ptr::{self, NonNull};
+use core::ptr::NonNull;
 use wasmtime_environ::{component::*, EngineOrModuleTypeIndex};
 use wasmtime_environ::{EntityIndex, EntityType, Global, PrimaryMap, WasmValType};
 
@@ -376,7 +376,7 @@ impl InstanceData {
             CoreDef::InstanceFlags(idx) => {
                 crate::runtime::vm::Export::Global(crate::runtime::vm::ExportGlobal {
                     definition: self.state.instance_flags(*idx).as_raw(),
-                    vmctx: ptr::null_mut(),
+                    vmctx: None,
                     global: Global {
                         wasm_ty: WasmValType::I32,
                         mutability: true,
@@ -608,8 +608,7 @@ impl<'a> Instantiator<'a> {
                 }
 
                 GlobalInitializer::ExtractCallback(callback) => {
-                    _ = callback;
-                    todo!()
+                    self.extract_callback(store.0, callback)
                 }
 
                 GlobalInitializer::ExtractPostReturn(post_return) => {
@@ -657,6 +656,16 @@ impl<'a> Instantiator<'a> {
             _ => unreachable!(),
         };
         self.data.state.set_runtime_realloc(realloc.index, func_ref);
+    }
+
+    fn extract_callback(&mut self, store: &mut StoreOpaque, callback: &ExtractCallback) {
+        let func_ref = match self.data.lookup_def(store, &callback.def) {
+            crate::runtime::vm::Export::Function(f) => f.func_ref,
+            _ => unreachable!(),
+        };
+        self.data
+            .state
+            .set_runtime_callback(callback.index, func_ref);
     }
 
     fn extract_post_return(&mut self, store: &mut StoreOpaque, post_return: &ExtractPostReturn) {

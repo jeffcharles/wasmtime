@@ -365,7 +365,7 @@ impl Instance {
                 f.func_ref.as_ref().array_call(
                     vm,
                     VMOpaqueContext::from_vmcontext(caller_vmctx),
-                    &mut [],
+                    NonNull::from(&mut []),
                 )
             })?;
         }
@@ -605,6 +605,7 @@ impl Instance {
     /// Returns both exported and non-exported globals.
     ///
     /// Gives access to the full globals space.
+    #[cfg(feature = "coredump")]
     pub(crate) fn all_globals<'a>(
         &'a self,
         store: &'a mut StoreOpaque,
@@ -625,6 +626,7 @@ impl Instance {
     /// Returns both exported and non-exported memories.
     ///
     /// Gives access to the full memories space.
+    #[cfg(feature = "coredump")]
     pub(crate) fn all_memories<'a>(
         &'a self,
         store: &'a mut StoreOpaque,
@@ -712,18 +714,20 @@ impl OwnedImports {
                 });
             }
             crate::runtime::vm::Export::Global(g) => {
-                self.globals.push(VMGlobalImport { from: g.definition });
+                self.globals.push(VMGlobalImport {
+                    from: g.definition.into(),
+                });
             }
             crate::runtime::vm::Export::Table(t) => {
                 self.tables.push(VMTableImport {
-                    from: t.definition,
-                    vmctx: t.vmctx,
+                    from: t.definition.into(),
+                    vmctx: t.vmctx.into(),
                 });
             }
             crate::runtime::vm::Export::Memory(m) => {
                 self.memories.push(VMMemoryImport {
-                    from: m.definition,
-                    vmctx: m.vmctx,
+                    from: m.definition.into(),
+                    vmctx: m.vmctx.into(),
                     index: m.index,
                 });
             }
@@ -818,7 +822,9 @@ impl<T> InstancePre<T> {
                         // Wasm-to-native trampoline.
                         debug_assert!(matches!(f.host_ctx(), crate::HostContext::Array(_)));
                         func_refs.push(VMFuncRef {
-                            wasm_call: module.wasm_to_array_trampoline(f.sig_index()),
+                            wasm_call: module
+                                .wasm_to_array_trampoline(f.sig_index())
+                                .map(|f| f.into()),
                             ..*f.func_ref()
                         });
                     }

@@ -38,14 +38,6 @@ impl RemKind {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-pub(crate) enum MemOpKind {
-    /// An atomic memory operation with SeqCst memory ordering.
-    Atomic,
-    /// A memory operation with no memory ordering constraint.
-    Normal,
-}
-
 #[derive(Eq, PartialEq)]
 pub(crate) enum MulWideKind {
     Signed,
@@ -397,39 +389,69 @@ impl From<ExtractLaneKind> for Extend<Signed> {
     }
 }
 
+/// Kinds of replace lane supported by WebAssembly.
+pub(crate) enum ReplaceLaneKind {
+    /// 16 lanes of 8 bit integers.
+    I8x16,
+    /// 8 lanes of 16 bit integers.
+    I16x8,
+    /// 4 lanes of 32 bit integers.
+    I32x4,
+    /// 2 lanes of 64 bit integers.
+    I64x2,
+    /// 4 lanes of 32 bit floats.
+    F32x4,
+    /// 2 lanes of 64 bit floats.
+    F64x2,
+}
+
+impl ReplaceLaneKind {
+    /// The lane size to use for different kinds of replace lane kinds.
+    pub(crate) fn lane_size(&self) -> OperandSize {
+        match self {
+            ReplaceLaneKind::I8x16 => OperandSize::S8,
+            ReplaceLaneKind::I16x8 => OperandSize::S16,
+            ReplaceLaneKind::I32x4 => OperandSize::S32,
+            ReplaceLaneKind::I64x2 => OperandSize::S64,
+            ReplaceLaneKind::F32x4 => OperandSize::S32,
+            ReplaceLaneKind::F64x2 => OperandSize::S64,
+        }
+    }
+}
+
 /// Kinds of behavior supported by Wasm loads.
 pub(crate) enum LoadKind {
     /// Load the entire bytes of the operand size without any modifications.
     Operand(OperandSize),
+    /// Atomic load, with optional scalar extend.
+    Atomic(OperandSize, Option<ExtendKind>),
     /// Duplicate value into vector lanes.
     Splat(SplatLoadKind),
     /// Scalar (non-vector) extend.
     ScalarExtend(ExtendKind),
     /// Vector extend.
     VectorExtend(VectorExtendKind),
+    /// Load content into select lane.
+    VectorLane(LaneSelector),
 }
 
 impl LoadKind {
     /// Returns the [`OperandSize`] used in the load operation.
     pub(crate) fn derive_operand_size(&self) -> OperandSize {
         match self {
-            Self::ScalarExtend(scalar) => Self::operand_size_for_scalar(scalar),
-            Self::VectorExtend(vector) => Self::operand_size_for_vector(vector),
+            Self::ScalarExtend(extend) | Self::Atomic(_, Some(extend)) => {
+                Self::operand_size_for_scalar(extend)
+            }
+            Self::VectorExtend(_) => OperandSize::S64,
             Self::Splat(kind) => Self::operand_size_for_splat(kind),
-            Self::Operand(op) => *op,
+            Self::Operand(size)
+            | Self::Atomic(size, None)
+            | Self::VectorLane(LaneSelector { size, .. }) => *size,
         }
     }
 
-    fn operand_size_for_vector(vector: &VectorExtendKind) -> OperandSize {
-        match vector {
-            VectorExtendKind::V128Extend8x8S | VectorExtendKind::V128Extend8x8U => OperandSize::S8,
-            VectorExtendKind::V128Extend16x4S | VectorExtendKind::V128Extend16x4U => {
-                OperandSize::S16
-            }
-            VectorExtendKind::V128Extend32x2S | VectorExtendKind::V128Extend32x2U => {
-                OperandSize::S32
-            }
-        }
+    pub fn vector_lane(lane: u8, size: OperandSize) -> Self {
+        Self::VectorLane(LaneSelector { lane, size })
     }
 
     fn operand_size_for_scalar(extend_kind: &ExtendKind) -> OperandSize {
@@ -447,6 +469,31 @@ impl LoadKind {
             SplatLoadKind::S64 => OperandSize::S64,
         }
     }
+
+    pub(crate) fn is_atomic(&self) -> bool {
+        matches!(self, Self::Atomic(_, _))
+    }
+}
+
+/// Kinds of behavior supported by Wasm loads.
+pub enum StoreKind {
+    /// Store the entire bytes of the operand size without any modifications.
+    Operand(OperandSize),
+    /// Store the entire bytes of the operand size without any modifications, atomically.
+    Atomic(OperandSize),
+    /// Store the content of selected lane.
+    VectorLane(LaneSelector),
+}
+
+impl StoreKind {
+    pub fn vector_lane(lane: u8, size: OperandSize) -> Self {
+        Self::VectorLane(LaneSelector { lane, size })
+    }
+}
+
+pub struct LaneSelector {
+    pub lane: u8,
+    pub size: OperandSize,
 }
 
 /// Kinds of vector equalities and non-equalities supported by WebAssembly.
@@ -944,13 +991,7 @@ pub(crate) trait MacroAssembler {
     /// regards to the endianness depending on the target ISA. For this reason,
     /// [Self::wasm_store], should be explicitly used when emitting WebAssembly
     /// stores.
-    fn wasm_store(
-        &mut self,
-        src: Reg,
-        dst: Self::Address,
-        size: OperandSize,
-        op_kind: MemOpKind,
-    ) -> Result<()>;
+    fn wasm_store(&mut self, src: Reg, dst: Self::Address, store_kind: StoreKind) -> Result<()>;
 
     /// Perform a zero-extended stack load.
     fn load(&mut self, src: Self::Address, dst: WritableReg, size: OperandSize) -> Result<()>;
@@ -963,13 +1004,7 @@ pub(crate) trait MacroAssembler {
     /// regards to the endianness depending on the target ISA. For this reason,
     /// [Self::wasm_load], should be explicitly used when emitting WebAssembly
     /// loads.
-    fn wasm_load(
-        &mut self,
-        src: Self::Address,
-        dst: WritableReg,
-        kind: LoadKind,
-        op_kind: MemOpKind,
-    ) -> Result<()>;
+    fn wasm_load(&mut self, src: Self::Address, dst: WritableReg, kind: LoadKind) -> Result<()>;
 
     /// Alias for `MacroAssembler::load` with the operand size corresponding
     /// to the pointer size of the target.
@@ -1490,6 +1525,15 @@ pub(crate) trait MacroAssembler {
         kind: ExtractLaneKind,
     ) -> Result<()>;
 
+    /// Replaces the value in `lane` in `dst` with the value in `src`.
+    fn replace_lane(
+        &mut self,
+        src: RegImm,
+        dst: WritableReg,
+        lane: u8,
+        kind: ReplaceLaneKind,
+    ) -> Result<()>;
+
     /// Perform an atomic CAS (compare-and-swap) operation with the value at `addr`, and `expected`
     /// and `replacement` (at the top of the context's stack).
     ///
@@ -1565,4 +1609,37 @@ pub(crate) trait MacroAssembler {
         rhs: Reg,
         kind: VectorCompareKind,
     ) -> Result<()>;
+
+    /// Emit a memory fence.
+    fn fence(&mut self) -> Result<()>;
+
+    /// Perform a logical `not` operation on the 128bits vector value in `dst`.
+    fn v128_not(&mut self, dst: WritableReg) -> Result<()>;
+
+    /// Perform a logical `and` operation on `src1` and `src1`, both 128bits vector values, writing
+    /// the result to `dst`.
+    fn v128_and(&mut self, src1: Reg, src2: Reg, dst: WritableReg) -> Result<()>;
+
+    /// Perform a logical `and_not` operation on `src1` and `src1`, both 128bits vector values, writing
+    /// the result to `dst`.
+    ///
+    /// `and_not` is not commutative: dst = !src1 & src2.
+    fn v128_and_not(&mut self, src1: Reg, src2: Reg, dst: WritableReg) -> Result<()>;
+
+    /// Perform a logical `or` operation on `src1` and `src1`, both 128bits vector values, writing
+    /// the result to `dst`.
+    fn v128_or(&mut self, src1: Reg, src2: Reg, dst: WritableReg) -> Result<()>;
+
+    /// Perform a logical `xor` operation on `src1` and `src1`, both 128bits vector values, writing
+    /// the result to `dst`.
+    fn v128_xor(&mut self, src1: Reg, src2: Reg, dst: WritableReg) -> Result<()>;
+
+    /// Given two 128bits vectors `src1` and `src2`, and a 128bits bitmask `mask`, selects bits
+    /// from `src1` when mask is 1, and from `src2` when mask is 0.
+    ///
+    /// This is equivalent to: `v128.or(v128.and(src1, mask), v128.and(src2, v128.not(mask)))`.
+    fn v128_bitselect(&mut self, src1: Reg, src2: Reg, mask: Reg, dst: WritableReg) -> Result<()>;
+
+    /// If any bit in `src` is 1, set `dst` to 1, or 0 otherwise.
+    fn v128_any_true(&mut self, src: Reg, dst: WritableReg) -> Result<()>;
 }

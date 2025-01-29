@@ -13,7 +13,7 @@ use crate::runtime::vm::vmcontext::{
 };
 use crate::runtime::vm::{
     ExportFunction, ExportGlobal, ExportMemory, ExportTable, GcStore, Imports, ModuleRuntimeInfo,
-    SendSyncPtr, VMFunctionBody, VMGcRef, VMStore, WasmFault,
+    SendSyncPtr, VMFunctionBody, VMGcRef, VMStore, VMStoreRawPtr, VmPtr, VmSafe, WasmFault,
 };
 use crate::store::{StoreInner, StoreOpaque};
 use crate::{prelude::*, StoreContextMut};
@@ -22,6 +22,7 @@ use core::alloc::Layout;
 use core::any::Any;
 use core::ops::Range;
 use core::ptr::NonNull;
+#[cfg(target_has_atomic = "64")]
 use core::sync::atomic::AtomicU64;
 use core::{mem, ptr};
 use sptr::Strict;
@@ -112,17 +113,15 @@ impl InstanceAndStore {
     /// See also the safety discussion in this type's documentation.
     #[inline]
     pub(crate) unsafe fn from_vmctx<R>(
-        vmctx: *mut VMContext,
+        vmctx: NonNull<VMContext>,
         f: impl for<'a> FnOnce(&'a mut Self) -> R,
     ) -> R {
-        debug_assert!(!vmctx.is_null());
-
         const _: () = assert!(mem::size_of::<InstanceAndStore>() == mem::size_of::<Instance>());
-        let ptr = vmctx
+        let mut ptr = vmctx
             .byte_sub(mem::size_of::<Instance>())
             .cast::<InstanceAndStore>();
 
-        f(&mut *ptr)
+        f(ptr.as_mut())
     }
 
     /// Unpacks this `InstanceAndStore` into its underlying `Instance` and `dyn
@@ -162,13 +161,7 @@ impl InstanceAndStore {
     /// store).
     #[inline]
     fn store_ptr(&self) -> *mut dyn VMStore {
-        let ptr = unsafe {
-            *self
-                .instance
-                .vmctx_plus_offset::<*mut dyn VMStore>(self.instance.offsets().ptr.vmctx_store())
-        };
-        debug_assert!(!ptr.is_null());
-        ptr
+        self.instance.store.unwrap().0.as_ptr()
     }
 }
 
@@ -281,6 +274,12 @@ pub struct Instance {
     #[cfg(feature = "wmemcheck")]
     pub(crate) wmemcheck_state: Option<Wmemcheck>,
 
+    /// Self-pointer back to `Store<T>` and its functions. Not present for
+    /// the brief time that `Store<T>` is itself being created. Also not
+    /// present for some niche uses that are disconnected from stores (e.g.
+    /// cross-thread stuff used in `InstancePre`)
+    store: Option<VMStoreRawPtr>,
+
     /// Additional context used by compiled wasm code. This field is last, and
     /// represents a dynamically-sized array that extends beyond the nominal
     /// end of the struct (similar to a flexible array member).
@@ -341,6 +340,7 @@ impl Instance {
                         None
                     }
                 },
+                store: None,
             },
         );
 
@@ -365,12 +365,14 @@ impl Instance {
     /// this can't be called twice on the same `VMContext` to get two active
     /// pointers to the same `Instance`.
     #[inline]
-    pub unsafe fn from_vmctx<R>(vmctx: *mut VMContext, f: impl FnOnce(&mut Instance) -> R) -> R {
-        debug_assert!(!vmctx.is_null());
-        let ptr = vmctx
+    pub unsafe fn from_vmctx<R>(
+        vmctx: NonNull<VMContext>,
+        f: impl FnOnce(&mut Instance) -> R,
+    ) -> R {
+        let mut ptr = vmctx
             .byte_sub(mem::size_of::<Instance>())
             .cast::<Instance>();
-        f(&mut *ptr)
+        f(ptr.as_mut())
     }
 
     /// Helper function to access various locations offset from our `*mut
@@ -380,14 +382,15 @@ impl Instance {
     ///
     /// This method is unsafe because the `offset` must be within bounds of the
     /// `VMContext` object trailing this instance.
-    unsafe fn vmctx_plus_offset<T>(&self, offset: impl Into<u32>) -> *const T {
+    unsafe fn vmctx_plus_offset<T: VmSafe>(&self, offset: impl Into<u32>) -> *const T {
         self.vmctx()
+            .as_ptr()
             .byte_add(usize::try_from(offset.into()).unwrap())
             .cast()
     }
 
     /// Dual of `vmctx_plus_offset`, but for mutability.
-    unsafe fn vmctx_plus_offset_mut<T>(&mut self, offset: impl Into<u32>) -> *mut T {
+    unsafe fn vmctx_plus_offset_mut<T: VmSafe>(&mut self, offset: impl Into<u32>) -> NonNull<T> {
         self.vmctx()
             .byte_add(usize::try_from(offset.into()).unwrap())
             .cast()
@@ -438,18 +441,18 @@ impl Instance {
     /// Return the indexed `VMTableDefinition`.
     #[allow(dead_code)]
     fn table(&mut self, index: DefinedTableIndex) -> VMTableDefinition {
-        unsafe { *self.table_ptr(index) }
+        unsafe { self.table_ptr(index).read() }
     }
 
     /// Updates the value for a defined table to `VMTableDefinition`.
     fn set_table(&mut self, index: DefinedTableIndex, table: VMTableDefinition) {
         unsafe {
-            *self.table_ptr(index) = table;
+            self.table_ptr(index).write(table);
         }
     }
 
     /// Return the indexed `VMTableDefinition`.
-    fn table_ptr(&mut self, index: DefinedTableIndex) -> *mut VMTableDefinition {
+    fn table_ptr(&mut self, index: DefinedTableIndex) -> NonNull<VMTableDefinition> {
         unsafe { self.vmctx_plus_offset_mut(self.offsets().vmctx_vmtable_definition(index)) }
     }
 
@@ -459,7 +462,7 @@ impl Instance {
             self.memory(defined_index)
         } else {
             let import = self.imported_memory(index);
-            unsafe { VMMemoryDefinition::load(import.from) }
+            unsafe { VMMemoryDefinition::load(import.from.as_ptr()) }
         }
     }
 
@@ -471,8 +474,9 @@ impl Instance {
         } else {
             let import = self.imported_memory(index);
             unsafe {
-                let ptr =
-                    Instance::from_vmctx(import.vmctx, |i| i.get_defined_memory(import.index));
+                let ptr = Instance::from_vmctx(import.vmctx.as_non_null(), |i| {
+                    i.get_defined_memory(import.index)
+                });
                 &mut *ptr
             }
         }
@@ -480,23 +484,26 @@ impl Instance {
 
     /// Return the indexed `VMMemoryDefinition`.
     fn memory(&self, index: DefinedMemoryIndex) -> VMMemoryDefinition {
-        unsafe { VMMemoryDefinition::load(self.memory_ptr(index)) }
+        unsafe { VMMemoryDefinition::load(self.memory_ptr(index).as_ptr()) }
     }
 
     /// Set the indexed memory to `VMMemoryDefinition`.
     fn set_memory(&self, index: DefinedMemoryIndex, mem: VMMemoryDefinition) {
         unsafe {
-            *self.memory_ptr(index) = mem;
+            self.memory_ptr(index).write(mem);
         }
     }
 
     /// Return the indexed `VMMemoryDefinition`.
-    fn memory_ptr(&self, index: DefinedMemoryIndex) -> *mut VMMemoryDefinition {
-        unsafe { *self.vmctx_plus_offset(self.offsets().vmctx_vmmemory_pointer(index)) }
+    fn memory_ptr(&self, index: DefinedMemoryIndex) -> NonNull<VMMemoryDefinition> {
+        let vmptr = unsafe {
+            *self.vmctx_plus_offset::<VmPtr<_>>(self.offsets().vmctx_vmmemory_pointer(index))
+        };
+        vmptr.as_non_null()
     }
 
     /// Return the indexed `VMGlobalDefinition`.
-    fn global_ptr(&mut self, index: DefinedGlobalIndex) -> *mut VMGlobalDefinition {
+    fn global_ptr(&mut self, index: DefinedGlobalIndex) -> NonNull<VMGlobalDefinition> {
         unsafe { self.vmctx_plus_offset_mut(self.offsets().vmctx_vmglobal_definition(index)) }
     }
 
@@ -507,11 +514,11 @@ impl Instance {
     pub(crate) fn defined_or_imported_global_ptr(
         &mut self,
         index: GlobalIndex,
-    ) -> *mut VMGlobalDefinition {
+    ) -> NonNull<VMGlobalDefinition> {
         if let Some(index) = self.env_module().defined_global_index(index) {
             self.global_ptr(index)
         } else {
-            self.imported_global(index).from
+            self.imported_global(index).from.as_non_null()
         }
     }
 
@@ -531,7 +538,7 @@ impl Instance {
                 idx,
                 ExportGlobal {
                     definition: self.defined_or_imported_global_ptr(idx),
-                    vmctx: self.vmctx(),
+                    vmctx: Some(self.vmctx()),
                     global: self.env_module().globals[idx],
                 },
             )
@@ -551,7 +558,7 @@ impl Instance {
                 let def_idx = module.defined_global_index(global_idx).unwrap();
                 let global = ExportGlobal {
                     definition: self.global_ptr(def_idx),
-                    vmctx: self.vmctx(),
+                    vmctx: Some(self.vmctx()),
                     global: self.env_module().globals[global_idx],
                 };
                 (def_idx, global)
@@ -560,45 +567,45 @@ impl Instance {
 
     /// Return a pointer to the interrupts structure
     #[inline]
-    pub fn runtime_limits(&mut self) -> *mut *const VMRuntimeLimits {
+    pub fn runtime_limits(&mut self) -> NonNull<Option<VmPtr<VMRuntimeLimits>>> {
         unsafe { self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_runtime_limits()) }
     }
 
     /// Return a pointer to the global epoch counter used by this instance.
-    pub fn epoch_ptr(&mut self) -> *mut *const AtomicU64 {
+    #[cfg(target_has_atomic = "64")]
+    pub fn epoch_ptr(&mut self) -> NonNull<Option<VmPtr<AtomicU64>>> {
         unsafe { self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_epoch_ptr()) }
     }
 
     /// Return a pointer to the GC heap base pointer.
-    pub fn gc_heap_base(&mut self) -> *mut *mut u8 {
+    pub fn gc_heap_base(&mut self) -> NonNull<Option<VmPtr<u8>>> {
         unsafe { self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_gc_heap_base()) }
     }
 
     /// Return a pointer to the GC heap bound.
-    pub fn gc_heap_bound(&mut self) -> *mut usize {
+    pub fn gc_heap_bound(&mut self) -> NonNull<usize> {
         unsafe { self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_gc_heap_bound()) }
     }
 
     /// Return a pointer to the collector-specific heap data.
-    pub fn gc_heap_data(&mut self) -> *mut *mut u8 {
+    pub fn gc_heap_data(&mut self) -> NonNull<Option<VmPtr<u8>>> {
         unsafe { self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_gc_heap_data()) }
     }
 
-    pub(crate) unsafe fn set_store(&mut self, store: Option<*mut dyn VMStore>) {
-        if let Some(store) = store {
-            *self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_store()) = store;
-            *self.runtime_limits() = (*store).vmruntime_limits();
-            *self.epoch_ptr() = (*store).engine().epoch_counter();
-            self.set_gc_heap((*store).gc_store_mut().ok());
+    pub(crate) unsafe fn set_store(&mut self, store: Option<NonNull<dyn VMStore>>) {
+        self.store = store.map(VMStoreRawPtr);
+        if let Some(mut store) = store {
+            let store = store.as_mut();
+            self.runtime_limits()
+                .write(Some(store.vmruntime_limits().into()));
+            #[cfg(target_has_atomic = "64")]
+            self.epoch_ptr()
+                .write(Some(NonNull::from(store.engine().epoch_counter()).into()));
+            self.set_gc_heap(store.gc_store_mut().ok());
         } else {
-            assert_eq!(
-                mem::size_of::<*mut dyn VMStore>(),
-                mem::size_of::<[*mut (); 2]>()
-            );
-            *self.vmctx_plus_offset_mut::<[*mut (); 2]>(self.offsets().ptr.vmctx_store()) =
-                [ptr::null_mut(), ptr::null_mut()];
-            *self.runtime_limits() = ptr::null_mut();
-            *self.epoch_ptr() = ptr::null_mut();
+            self.runtime_limits().write(None);
+            #[cfg(target_has_atomic = "64")]
+            self.epoch_ptr().write(None);
             self.set_gc_heap(None);
         }
     }
@@ -606,24 +613,27 @@ impl Instance {
     unsafe fn set_gc_heap(&mut self, gc_store: Option<&mut GcStore>) {
         if let Some(gc_store) = gc_store {
             let heap = gc_store.gc_heap.heap_slice_mut();
-            *self.gc_heap_base() = heap.as_mut_ptr();
-            *self.gc_heap_bound() = heap.len();
-            *self.gc_heap_data() = gc_store.gc_heap.vmctx_gc_heap_data();
+            self.gc_heap_bound().write(heap.len());
+            self.gc_heap_base()
+                .write(Some(NonNull::from(heap).cast().into()));
+            self.gc_heap_data()
+                .write(Some(gc_store.gc_heap.vmctx_gc_heap_data().into()));
         } else {
-            *self.gc_heap_base() = ptr::null_mut();
-            *self.gc_heap_bound() = 0;
-            *self.gc_heap_data() = ptr::null_mut();
+            self.gc_heap_bound().write(0);
+            self.gc_heap_base().write(None);
+            self.gc_heap_data().write(None);
         }
     }
 
     pub(crate) unsafe fn set_callee(&mut self, callee: Option<NonNull<VMFunctionBody>>) {
-        *self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_callee()) =
-            callee.map_or(ptr::null_mut(), |c| c.as_ptr());
+        let callee = callee.map(|p| VmPtr::from(p));
+        self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_callee())
+            .write(callee);
     }
 
     /// Return a reference to the vmctx used by compiled wasm code.
     #[inline]
-    pub fn vmctx(&self) -> *mut VMContext {
+    pub fn vmctx(&self) -> NonNull<VMContext> {
         // The definition of this method is subtle but intentional. The goal
         // here is that effectively this should return `&mut self.vmctx`, but
         // it's not quite so simple. Some more documentation is available on the
@@ -645,7 +655,8 @@ impl Instance {
         // trait `Strict` but the method names conflict with the nightly methods
         // so a different syntax is used to invoke methods here.
         let addr = &raw const self.vmctx;
-        Strict::with_addr(self.vmctx_self_reference.as_ptr(), Strict::addr(addr))
+        let ret = Strict::with_addr(self.vmctx_self_reference.as_ptr(), Strict::addr(addr));
+        NonNull::new(ret).unwrap()
     }
 
     fn get_exported_func(&mut self, index: FuncIndex) -> ExportFunction {
@@ -659,7 +670,7 @@ impl Instance {
                 (self.table_ptr(def_index), self.vmctx())
             } else {
                 let import = self.imported_table(index);
-                (import.from, import.vmctx)
+                (import.from.as_non_null(), import.vmctx.as_non_null())
             };
         ExportTable {
             definition,
@@ -674,7 +685,11 @@ impl Instance {
                 (self.memory_ptr(def_index), self.vmctx(), def_index)
             } else {
                 let import = self.imported_memory(index);
-                (import.from, import.vmctx, import.index)
+                (
+                    import.from.as_non_null(),
+                    import.vmctx.as_non_null(),
+                    import.index,
+                )
             };
         ExportMemory {
             definition,
@@ -689,9 +704,9 @@ impl Instance {
             definition: if let Some(def_index) = self.env_module().defined_global_index(index) {
                 self.global_ptr(def_index)
             } else {
-                self.imported_global(index).from
+                self.imported_global(index).from.as_non_null()
             },
-            vmctx: self.vmctx(),
+            vmctx: Some(self.vmctx()),
             global: self.env_module().globals[index],
         }
     }
@@ -716,7 +731,7 @@ impl Instance {
         let index = DefinedTableIndex::new(
             usize::try_from(
                 (table as *const VMTableDefinition)
-                    .offset_from(self.table_ptr(DefinedTableIndex::new(0))),
+                    .offset_from(self.table_ptr(DefinedTableIndex::new(0)).as_ptr()),
             )
             .unwrap(),
         );
@@ -745,7 +760,7 @@ impl Instance {
             None => {
                 let import = self.imported_memory(index);
                 unsafe {
-                    Instance::from_vmctx(import.vmctx, |i| {
+                    Instance::from_vmctx(import.vmctx.as_non_null(), |i| {
                         i.defined_memory_grow(store, import.index, delta)
                     })
                 }
@@ -825,6 +840,10 @@ impl Instance {
         Layout::from_size_align(size, align).unwrap()
     }
 
+    fn type_ids_array(&mut self) -> NonNull<VmPtr<VMSharedTypeIndex>> {
+        unsafe { self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_type_ids_array()) }
+    }
+
     /// Construct a new VMFuncRef for the given function
     /// (imported or defined in this module) and store into the given
     /// location. Used during lazy initialization.
@@ -841,8 +860,7 @@ impl Instance {
         into: *mut VMFuncRef,
     ) {
         let type_index = unsafe {
-            let base: *const VMSharedTypeIndex =
-                *self.vmctx_plus_offset_mut(self.offsets().ptr.vmctx_type_ids_array());
+            let base = self.type_ids_array().read().as_ptr();
             *base.add(sig.index())
         };
 
@@ -851,9 +869,10 @@ impl Instance {
                 array_call: self
                     .runtime_info
                     .array_to_wasm_trampoline(def_index)
-                    .expect("should have array-to-Wasm trampoline for escaping function"),
-                wasm_call: Some(self.runtime_info.function(def_index)),
-                vmctx: VMOpaqueContext::from_vmcontext(self.vmctx()),
+                    .expect("should have array-to-Wasm trampoline for escaping function")
+                    .into(),
+                wasm_call: Some(self.runtime_info.function(def_index).into()),
+                vmctx: VMOpaqueContext::from_vmcontext(self.vmctx()).into(),
                 type_index,
             }
         } else {
@@ -913,11 +932,11 @@ impl Instance {
             // all!
             let func = &self.env_module().functions[index];
             let sig = func.signature;
-            let func_ref: *mut VMFuncRef = self
+            let func_ref = self
                 .vmctx_plus_offset_mut::<VMFuncRef>(self.offsets().vmctx_func_ref(func.func_ref));
-            self.construct_func_ref(index, sig, func_ref);
+            self.construct_func_ref(index, sig, func_ref.as_ptr());
 
-            Some(NonNull::new(func_ref).unwrap())
+            Some(func_ref)
         }
     }
 
@@ -1067,7 +1086,9 @@ impl Instance {
 
     /// Get a locally-defined memory.
     pub fn get_defined_memory(&mut self, index: DefinedMemoryIndex) -> *mut Memory {
-        &raw mut self.memories[index].1
+        // SAFETY: the `unsafe` here is projecting from `*mut (A, B)` to
+        // `*mut A`, which should be a safe operation to do.
+        unsafe { &raw mut (*self.memories.get_raw_mut(index).unwrap()).1 }
     }
 
     /// Do a `memory.copy`
@@ -1096,8 +1117,8 @@ impl Instance {
         // Bounds and casts are checked above, by this point we know that
         // everything is safe.
         unsafe {
-            let dst = dst_mem.base.add(dst);
-            let src = src_mem.base.add(src);
+            let dst = dst_mem.base.as_ptr().add(dst);
+            let src = src_mem.base.as_ptr().add(src);
             // FIXME audit whether this is safe in the presence of shared memory
             // (https://github.com/bytecodealliance/wasmtime/issues/4203).
             ptr::copy(src, dst, len);
@@ -1138,7 +1159,7 @@ impl Instance {
         // Bounds and casts are checked above, by this point we know that
         // everything is safe.
         unsafe {
-            let dst = memory.base.add(dst);
+            let dst = memory.base.as_ptr().add(dst);
             // FIXME audit whether this is safe in the presence of shared memory
             // (https://github.com/bytecodealliance/wasmtime/issues/4203).
             ptr::write_bytes(dst, val, len);
@@ -1200,7 +1221,7 @@ impl Instance {
 
         unsafe {
             let src_start = data.as_ptr().add(src);
-            let dst_start = memory.base.add(dst);
+            let dst_start = memory.base.as_ptr().add(dst);
             // FIXME audit whether this is safe in the presence of shared memory
             // (https://github.com/bytecodealliance/wasmtime/issues/4203).
             ptr::copy_nonoverlapping(src_start, dst_start, len);
@@ -1287,20 +1308,26 @@ impl Instance {
             }
         }
 
-        &raw mut self.tables[idx].1
+        // SAFETY: the `unsafe` here is projecting from `*mut (A, B)` to
+        // `*mut A`, which should be a safe operation to do.
+        unsafe { &raw mut (*self.tables.get_raw_mut(idx).unwrap()).1 }
     }
 
     /// Get a table by index regardless of whether it is locally-defined or an
     /// imported, foreign table.
     pub(crate) fn get_table(&mut self, table_index: TableIndex) -> *mut Table {
-        self.with_defined_table_index_and_instance(table_index, |idx, instance| {
-            &raw mut instance.tables[idx].1
+        self.with_defined_table_index_and_instance(table_index, |idx, instance| unsafe {
+            // SAFETY: the `unsafe` here is projecting from `*mut (A, B)` to
+            // `*mut A`, which should be a safe operation to do.
+            &raw mut (*instance.tables.get_raw_mut(idx).unwrap()).1
         })
     }
 
     /// Get a locally-defined table.
     pub(crate) fn get_defined_table(&mut self, index: DefinedTableIndex) -> *mut Table {
-        &raw mut self.tables[index].1
+        // SAFETY: the `unsafe` here is projecting from `*mut (A, B)` to
+        // `*mut A`, which should be a safe operation to do.
+        unsafe { &raw mut (*self.tables.get_raw_mut(index).unwrap()).1 }
     }
 
     pub(crate) fn with_defined_table_index_and_instance<R>(
@@ -1313,8 +1340,8 @@ impl Instance {
         } else {
             let import = self.imported_table(index);
             unsafe {
-                Instance::from_vmctx(import.vmctx, |foreign_instance| {
-                    let foreign_table_def = import.from;
+                Instance::from_vmctx(import.vmctx.as_non_null(), |foreign_instance| {
+                    let foreign_table_def = import.from.as_ptr();
                     let foreign_table_index = foreign_instance.table_index(&*foreign_table_def);
                     f(foreign_table_index, foreign_instance)
                 })
@@ -1336,41 +1363,48 @@ impl Instance {
     ) {
         assert!(ptr::eq(module, self.env_module().as_ref()));
 
-        *self.vmctx_plus_offset_mut(offsets.ptr.vmctx_magic()) = VMCONTEXT_MAGIC;
+        self.vmctx_plus_offset_mut(offsets.ptr.vmctx_magic())
+            .write(VMCONTEXT_MAGIC);
         self.set_callee(None);
         self.set_store(store.as_raw());
 
         // Initialize shared types
-        let types = self.runtime_info.type_ids();
-        *self.vmctx_plus_offset_mut(offsets.ptr.vmctx_type_ids_array()) = types.as_ptr();
+        let types = NonNull::from(self.runtime_info.type_ids());
+        self.type_ids_array().write(types.cast().into());
 
         // Initialize the built-in functions
-        *self.vmctx_plus_offset_mut(offsets.ptr.vmctx_builtin_functions()) =
-            &VMBuiltinFunctionsArray::INIT;
+        static BUILTINS: VMBuiltinFunctionsArray = VMBuiltinFunctionsArray::INIT;
+        let ptr = BUILTINS.expose_provenance();
+        self.vmctx_plus_offset_mut(offsets.ptr.vmctx_builtin_functions())
+            .write(VmPtr::from(ptr));
 
         // Initialize the imports
         debug_assert_eq!(imports.functions.len(), module.num_imported_funcs);
         ptr::copy_nonoverlapping(
             imports.functions.as_ptr(),
-            self.vmctx_plus_offset_mut(offsets.vmctx_imported_functions_begin()),
+            self.vmctx_plus_offset_mut(offsets.vmctx_imported_functions_begin())
+                .as_ptr(),
             imports.functions.len(),
         );
         debug_assert_eq!(imports.tables.len(), module.num_imported_tables);
         ptr::copy_nonoverlapping(
             imports.tables.as_ptr(),
-            self.vmctx_plus_offset_mut(offsets.vmctx_imported_tables_begin()),
+            self.vmctx_plus_offset_mut(offsets.vmctx_imported_tables_begin())
+                .as_ptr(),
             imports.tables.len(),
         );
         debug_assert_eq!(imports.memories.len(), module.num_imported_memories);
         ptr::copy_nonoverlapping(
             imports.memories.as_ptr(),
-            self.vmctx_plus_offset_mut(offsets.vmctx_imported_memories_begin()),
+            self.vmctx_plus_offset_mut(offsets.vmctx_imported_memories_begin())
+                .as_ptr(),
             imports.memories.len(),
         );
         debug_assert_eq!(imports.globals.len(), module.num_imported_globals);
         ptr::copy_nonoverlapping(
             imports.globals.as_ptr(),
-            self.vmctx_plus_offset_mut(offsets.vmctx_imported_globals_begin()),
+            self.vmctx_plus_offset_mut(offsets.vmctx_imported_globals_begin())
+                .as_ptr(),
             imports.globals.len(),
         );
 
@@ -1382,7 +1416,7 @@ impl Instance {
         // Initialize the defined tables
         let mut ptr = self.vmctx_plus_offset_mut(offsets.vmctx_tables_begin());
         for i in 0..module.num_defined_tables() {
-            ptr::write(ptr, self.tables[DefinedTableIndex::new(i)].1.vmtable());
+            ptr.write(self.tables[DefinedTableIndex::new(i)].1.vmtable());
             ptr = ptr.add(1);
         }
 
@@ -1402,10 +1436,10 @@ impl Instance {
                     .as_shared_memory()
                     .unwrap()
                     .vmmemory_ptr();
-                ptr::write(ptr, def_ptr.cast_mut());
+                ptr.write(VmPtr::from(def_ptr));
             } else {
-                ptr::write(owned_ptr, self.memories[defined_memory_index].1.vmmemory());
-                ptr::write(ptr, owned_ptr);
+                owned_ptr.write(self.memories[defined_memory_index].1.vmmemory());
+                ptr.write(VmPtr::from(owned_ptr));
                 owned_ptr = owned_ptr.add(1);
             }
             ptr = ptr.add(1);
@@ -1416,7 +1450,7 @@ impl Instance {
         // with their const expression initializers after the instance is fully
         // allocated.
         for (index, _init) in module.global_initializers.iter() {
-            ptr::write(self.global_ptr(index), VMGlobalDefinition::new());
+            self.global_ptr(index).write(VMGlobalDefinition::new());
         }
     }
 
@@ -1453,7 +1487,7 @@ impl InstanceHandle {
 
     /// Return a raw pointer to the vmctx used by compiled wasm code.
     #[inline]
-    pub fn vmctx(&self) -> *mut VMContext {
+    pub fn vmctx(&self) -> NonNull<VMContext> {
         self.instance().vmctx()
     }
 
@@ -1607,7 +1641,7 @@ impl InstanceHandle {
     /// This should only be used for initializing a vmctx's store pointer. It
     /// should never be used to access the store itself. Use `InstanceAndStore`
     /// for that instead.
-    pub fn traitobj(&self, store: &StoreOpaque) -> *mut dyn VMStore {
+    pub fn traitobj(&self, store: &StoreOpaque) -> NonNull<dyn VMStore> {
         // By requiring a store argument, we are ensuring that callers aren't
         // getting this trait object in order to access the store, since they
         // already have access. See `InstanceAndStore` and its documentation for
@@ -1615,20 +1649,14 @@ impl InstanceHandle {
         // to.
         let _ = store;
 
-        let ptr = unsafe {
-            *self
-                .instance()
-                .vmctx_plus_offset::<*mut dyn VMStore>(self.instance().offsets().ptr.vmctx_store())
-        };
-        debug_assert!(!ptr.is_null());
-        ptr
+        self.instance().store.unwrap().0
     }
 
     /// Configure the `*mut dyn Store` internal pointer after-the-fact.
     ///
     /// This is provided for the original `Store` itself to configure the first
     /// self-pointer after the original `Box` has been initialized.
-    pub unsafe fn set_store(&mut self, store: *mut dyn VMStore) {
+    pub unsafe fn set_store(&mut self, store: NonNull<dyn VMStore>) {
         self.instance_mut().set_store(Some(store));
     }
 

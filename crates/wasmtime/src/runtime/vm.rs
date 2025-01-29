@@ -18,6 +18,7 @@ use wasmtime_environ::{
     VMSharedTypeIndex,
 };
 
+#[cfg(has_host_compiler_backend)]
 mod arch;
 mod async_yield;
 #[cfg(feature = "component-model")]
@@ -29,6 +30,7 @@ mod imports;
 mod instance;
 mod memory;
 mod mmap_vec;
+mod provenance;
 mod send_sync_ptr;
 mod send_sync_unsafe_cell;
 mod store_box;
@@ -41,7 +43,10 @@ mod vmcontext;
 #[cfg(feature = "threads")]
 mod parking_spot;
 
-#[cfg(feature = "debug-builtins")]
+// Note that `debug_builtins` here is disabled with a feature or a lack of a
+// native compilation backend because it's only here to assist in debugging
+// natively compiled code.
+#[cfg(all(has_host_compiler_backend, feature = "debug-builtins"))]
 pub mod debug_builtins;
 pub mod libcalls;
 pub mod mpk;
@@ -56,6 +61,7 @@ pub(crate) use interpreter_disabled as interpreter;
 #[cfg(feature = "debug-builtins")]
 pub use wasmtime_jit_debug::gdb_jit_int::GdbJitImageRegistration;
 
+#[cfg(has_host_compiler_backend)]
 pub use crate::runtime::vm::arch::get_stack_pointer;
 pub use crate::runtime::vm::async_yield::*;
 pub use crate::runtime::vm::export::*;
@@ -76,10 +82,11 @@ pub use crate::runtime::vm::memory::{
     Memory, MemoryBase, RuntimeLinearMemory, RuntimeMemoryCreator, SharedMemory,
 };
 pub use crate::runtime::vm::mmap_vec::MmapVec;
-pub use crate::runtime::vm::mpk::MpkEnabled;
+pub use crate::runtime::vm::provenance::*;
 pub use crate::runtime::vm::store_box::*;
 #[cfg(feature = "std")]
 pub use crate::runtime::vm::sys::mmap::open_file_for_mmap;
+#[cfg(has_host_compiler_backend)]
 pub use crate::runtime::vm::sys::unwind::UnwindRegistration;
 pub use crate::runtime::vm::table::{Table, TableElement};
 pub use crate::runtime::vm::traphandlers::*;
@@ -171,6 +178,7 @@ pub unsafe trait VMStore {
     /// Callback invoked whenever an instance observes a new epoch
     /// number. Cannot fail; cooperative epoch-based yielding is
     /// completely semantically transparent. Returns the new deadline.
+    #[cfg(target_has_atomic = "64")]
     fn new_epoch(&mut self) -> Result<u64, Error>;
 
     /// Callback invoked whenever an instance needs to trigger a GC.
@@ -202,6 +210,29 @@ impl DerefMut for dyn VMStore + '_ {
         self.store_opaque_mut()
     }
 }
+
+/// A newtype wrapper around `NonNull<dyn VMStore>` intended to be a
+/// self-pointer back to the `Store<T>` within raw data structures like
+/// `VMContext`.
+///
+/// This type exists to manually, and unsafely, implement `Send` and `Sync`.
+/// The `VMStore` trait doesn't require `Send` or `Sync` which means this isn't
+/// naturally either trait (e.g. with `SendSyncPtr` instead). Note that this
+/// means that `Instance` is, for example, mistakenly considered
+/// unconditionally `Send` and `Sync`. This is hopefully ok for now though
+/// because from a user perspective the only type that matters is `Store<T>`.
+/// That type is `Send + Sync` if `T: Send + Sync` already so the internal
+/// storage of `Instance` shouldn't matter as the final result is the same.
+/// Note though that this means we need to be extra vigilant about cross-thread
+/// usage of `Instance` and `ComponentInstance` for example.
+#[derive(Copy, Clone)]
+#[repr(transparent)]
+struct VMStoreRawPtr(NonNull<dyn VMStore>);
+
+// SAFETY: this is the purpose of `VMStoreRawPtr`, see docs above about safe
+// usage.
+unsafe impl Send for VMStoreRawPtr {}
+unsafe impl Sync for VMStoreRawPtr {}
 
 /// Functionality required by this crate for a particular module. This
 /// is chiefly needed for lazy initialization of various bits of
@@ -320,6 +351,7 @@ impl ModuleRuntimeInfo {
     /// A unique ID for this particular module. This can be used to
     /// allow for fastpaths to optimize a "re-instantiate the same
     /// module again" case.
+    #[cfg(feature = "pooling-allocator")]
     fn unique_id(&self) -> Option<CompiledModuleId> {
         match self {
             ModuleRuntimeInfo::Module(m) => Some(m.id()),

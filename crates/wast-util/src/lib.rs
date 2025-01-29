@@ -185,6 +185,7 @@ macro_rules! foreach_config_option {
             hogs_memory
             nan_canonicalization
             component_model_more_flags
+            component_model_async
             simd
             gc_types
         }
@@ -391,7 +392,6 @@ impl WastTest {
                 "component-model/modules.wast",
                 "extended-const/elem.wast",
                 "extended-const/global.wast",
-                "memory64/threads.wast",
                 "misc_testsuite/externref-id-function.wast",
                 "misc_testsuite/externref-segment.wast",
                 "misc_testsuite/externref-segments.wast",
@@ -425,15 +425,9 @@ impl WastTest {
                 "misc_testsuite/simd/almost-extmul.wast",
                 "misc_testsuite/simd/canonicalize-nan.wast",
                 "misc_testsuite/simd/cvt-from-uint.wast",
-                "misc_testsuite/simd/issue4807.wast",
                 "misc_testsuite/simd/issue6725-no-egraph-panic.wast",
                 "misc_testsuite/simd/issue_3327_bnot_lowering.wast",
-                "misc_testsuite/simd/load_splat_out_of_bounds.wast",
-                "misc_testsuite/simd/replace-lane-preserve.wast",
-                "misc_testsuite/simd/unaligned-load.wast",
-                "multi-memory/simd_memory-multi.wast",
                 "spec_testsuite/simd_bit_shift.wast",
-                "spec_testsuite/simd_bitwise.wast",
                 "spec_testsuite/simd_boolean.wast",
                 "spec_testsuite/simd_const.wast",
                 "spec_testsuite/simd_conversions.wast",
@@ -467,21 +461,8 @@ impl WastTest {
                 "spec_testsuite/simd_int_to_int_extend.wast",
                 "spec_testsuite/simd_lane.wast",
                 "spec_testsuite/simd_load.wast",
-                "spec_testsuite/simd_load16_lane.wast",
-                "spec_testsuite/simd_load32_lane.wast",
-                "spec_testsuite/simd_load64_lane.wast",
-                "spec_testsuite/simd_load8_lane.wast",
                 "spec_testsuite/simd_load_zero.wast",
                 "spec_testsuite/simd_splat.wast",
-                "spec_testsuite/simd_store16_lane.wast",
-                "spec_testsuite/simd_store32_lane.wast",
-                "spec_testsuite/simd_store64_lane.wast",
-                "spec_testsuite/simd_store8_lane.wast",
-                // thread related failures
-                "proposals/threads/atomic.wast",
-                "misc_testsuite/threads/wait_notify.wast",
-                "misc_testsuite/threads/atomics_wait_address.wast",
-                "misc_testsuite/threads/atomics_notify.wast",
             ];
 
             if unsupported.iter().any(|part| self.path.ends_with(part)) {
@@ -492,6 +473,7 @@ impl WastTest {
             #[cfg(target_arch = "x86_64")]
             if !(std::is_x86_feature_detected!("avx") && std::is_x86_feature_detected!("avx2")) {
                 let unsupported = [
+                    "misc_testsuite/simd/replace-lane-preserve.wast",
                     "misc_testsuite/simd/spillslot-size-fuzzbug.wast",
                     "misc_testsuite/winch/_simd_lane.wast",
                     "misc_testsuite/winch/_simd_splat.wast",
@@ -504,6 +486,19 @@ impl WastTest {
                     "spec_testsuite/simd_i8x16_cmp.wast",
                     "spec_testsuite/simd_load_extend.wast",
                     "spec_testsuite/simd_load_splat.wast",
+                    "spec_testsuite/simd_store16_lane.wast",
+                    "spec_testsuite/simd_store32_lane.wast",
+                    "spec_testsuite/simd_store64_lane.wast",
+                    "spec_testsuite/simd_store8_lane.wast",
+                    "spec_testsuite/simd_load16_lane.wast",
+                    "spec_testsuite/simd_load32_lane.wast",
+                    "spec_testsuite/simd_load64_lane.wast",
+                    "spec_testsuite/simd_load8_lane.wast",
+                    "spec_testsuite/simd_bitwise.wast",
+                    "misc_testsuite/simd/load_splat_out_of_bounds.wast",
+                    "misc_testsuite/simd/unaligned-load.wast",
+                    "multi-memory/simd_memory-multi.wast",
+                    "misc_testsuite/simd/issue4807.wast",
                 ];
 
                 if unsupported.iter().any(|part| self.path.ends_with(part)) {

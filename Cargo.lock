@@ -1205,6 +1205,7 @@ dependencies = [
  "anyhow",
  "dlmalloc",
  "wasmtime",
+ "wasmtime-wasi-io",
 ]
 
 [[package]]
@@ -2663,7 +2664,6 @@ dependencies = [
  "env_logger 0.11.5",
  "log",
  "object",
- "sptr",
  "termcolor",
  "wasmtime-math",
 ]
@@ -4121,6 +4121,7 @@ dependencies = [
  "bumpalo",
  "cc",
  "cfg-if",
+ "cranelift-native",
  "encoding_rs",
  "env_logger 0.11.5",
  "futures",
@@ -4130,6 +4131,7 @@ dependencies = [
  "indexmap 2.7.0",
  "ittapi",
  "libc",
+ "libtest-mimic",
  "log",
  "mach2",
  "memfd",
@@ -4332,6 +4334,9 @@ dependencies = [
  "file-per-thread-logger",
  "humantime",
  "rayon",
+ "serde",
+ "serde_derive",
+ "toml",
  "tracing-subscriber",
  "wasmtime",
 ]
@@ -4508,6 +4513,7 @@ dependencies = [
  "wasmparser",
  "wasmprinter",
  "wasmtime",
+ "wasmtime-cli-flags",
  "wasmtime-wast",
  "wasmtime-wast-util",
  "wat",

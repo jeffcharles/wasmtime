@@ -5,7 +5,6 @@ use alloc::sync::Arc;
 use bitflags::Flags;
 use core::fmt;
 use core::str::FromStr;
-use serde_derive::{Deserialize, Serialize};
 #[cfg(any(feature = "cache", feature = "cranelift", feature = "winch"))]
 use std::path::Path;
 use wasmparser::WasmFeatures;
@@ -31,8 +30,6 @@ use wasmtime_fiber::RuntimeFiberStackCreator;
 
 #[cfg(feature = "runtime")]
 pub use crate::runtime::code_memory::CustomCodeMemory;
-#[cfg(feature = "pooling-allocator")]
-pub use crate::runtime::vm::MpkEnabled;
 #[cfg(all(feature = "incremental-cache", feature = "cranelift"))]
 pub use wasmtime_environ::CacheStore;
 
@@ -164,6 +161,7 @@ pub struct Config {
     pub(crate) memory_guaranteed_dense_image_size: u64,
     pub(crate) force_memory_init_memfd: bool,
     pub(crate) wmemcheck: bool,
+    #[cfg(feature = "coredump")]
     pub(crate) coredump_on_trap: bool,
     pub(crate) macos_use_mach_ports: bool,
     pub(crate) detect_host_feature: Option<fn(&str) -> Option<bool>>,
@@ -268,6 +266,7 @@ impl Config {
             memory_guaranteed_dense_image_size: 16 << 20,
             force_memory_init_memfd: false,
             wmemcheck: false,
+            #[cfg(feature = "coredump")]
             coredump_on_trap: false,
             macos_use_mach_ports: !cfg!(miri),
             #[cfg(feature = "std")]
@@ -523,6 +522,12 @@ impl Config {
     /// Native unwind information is included:
     /// - When targeting Windows, since the Windows ABI requires it.
     /// - By default.
+    ///
+    /// Note that systems loading many modules may wish to disable this
+    /// configuration option instead of leaving it on-by-default. Some platforms
+    /// exhibit quadratic behavior when registering/unregistering unwinding
+    /// information which can greatly slow down the module loading/unloading
+    /// process.
     ///
     /// [`WasmBacktrace`]: crate::WasmBacktrace
     pub fn native_unwind_info(&mut self, enable: bool) -> &mut Self {
@@ -926,8 +931,10 @@ impl Config {
     /// as the `v128` type and all of its operators being in a module. Note that
     /// this does not enable the [relaxed simd proposal].
     ///
-    /// **Note**: On x86_64 platforms the base CPU feature requirement for SIMD
-    /// is SSE2.
+    /// **Note**
+    ///
+    /// On x86_64 platforms the base CPU feature requirement for SIMD
+    /// is SSE2 for the Cranelift compiler and AVX for the Winch compiler.
     ///
     /// This is `true` by default.
     ///
@@ -1100,6 +1107,19 @@ impl Config {
     #[cfg(feature = "component-model")]
     pub fn wasm_component_model_multiple_returns(&mut self, enable: bool) -> &mut Self {
         self.wasm_feature(WasmFeatures::COMPONENT_MODEL_MULTIPLE_RETURNS, enable);
+        self
+    }
+
+    /// Configures whether components support the async ABI [proposal] for
+    /// lifting and lowering functions, as well as `stream`, `future`, and
+    /// `error-context` types.
+    ///
+    /// Please note that Wasmtime's support for this feature is _very_ incomplete.
+    ///
+    /// [proposal]: https://github.com/WebAssembly/component-model/blob/main/design/mvp/Async.md
+    #[cfg(feature = "component-model-async")]
+    pub fn wasm_component_model_async(&mut self, enable: bool) -> &mut Self {
+        self.wasm_feature(WasmFeatures::COMPONENT_MODEL_ASYNC, enable);
         self
     }
 
@@ -2146,21 +2166,29 @@ impl Config {
 
         let mut tunables = Tunables::default_for_target(&self.compiler_target())?;
 
-        // If this platform doesn't have native signals then change some
-        // defaults to account for that. Note that VM guards are turned off here
-        // because that's primarily a feature of eliding bounds-checks.
-        if !cfg!(has_native_signals) {
-            tunables.signals_based_traps = cfg!(has_native_signals);
-            tunables.memory_guard_size = 0;
-        }
+        // If no target is explicitly specified then further refine `tunables`
+        // for the configuration of this host depending on what platform
+        // features were found available at compile time. This means that anyone
+        // cross-compiling for a customized host will need to further refine
+        // compilation options.
+        if self.target.is_none() {
+            // If this platform doesn't have native signals then change some
+            // defaults to account for that. Note that VM guards are turned off
+            // here because that's primarily a feature of eliding
+            // bounds-checks.
+            if !cfg!(has_native_signals) {
+                tunables.signals_based_traps = cfg!(has_native_signals);
+                tunables.memory_guard_size = 0;
+            }
 
-        // When virtual memory is not available use slightly different defaults
-        // for tunables to be more amenable to `MallocMemory`. Note that these
-        // can still be overridden by config options.
-        if !cfg!(has_virtual_memory) {
-            tunables.memory_reservation = 0;
-            tunables.memory_reservation_for_growth = 1 << 20; // 1MB
-            tunables.memory_init_cow = false;
+            // When virtual memory is not available use slightly different
+            // defaults for tunables to be more amenable to `MallocMemory`.
+            // Note that these can still be overridden by config options.
+            if !cfg!(has_virtual_memory) {
+                tunables.memory_reservation = 0;
+                tunables.memory_reservation_for_growth = 1 << 20; // 1MB
+                tunables.memory_init_cow = false;
+            }
         }
 
         self.tunables.configure(&mut tunables);
@@ -2186,15 +2214,6 @@ impl Config {
         } else {
             None
         };
-
-        // Double-check that this configuration isn't requesting capabilities
-        // that this build of Wasmtime doesn't support.
-        if !cfg!(has_native_signals) && tunables.signals_based_traps {
-            bail!("signals-based-traps disabled at compile time -- cannot be enabled");
-        }
-        if !cfg!(has_virtual_memory) && tunables.memory_init_cow {
-            bail!("virtual memory disabled at compile time -- cannot enable CoW");
-        }
 
         Ok((tunables, features))
     }
@@ -2758,7 +2777,7 @@ impl Collector {
 
 /// Possible optimization levels for the Cranelift codegen backend.
 #[non_exhaustive]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum OptLevel {
     /// No optimizations performed, minimizes compilation time by disabling most
     /// optimizations.
@@ -2772,7 +2791,7 @@ pub enum OptLevel {
 
 /// Possible register allocator algorithms for the Cranelift codegen backend.
 #[non_exhaustive]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum RegallocAlgorithm {
     /// Generates the fastest possible code, but may take longer.
     ///
@@ -2829,6 +2848,18 @@ pub enum WasmBacktraceDetails {
     /// Support for backtrace details is conditional on the
     /// `WASMTIME_BACKTRACE_DETAILS` environment variable.
     Environment,
+}
+
+/// Describe the tri-state configuration of memory protection keys (MPK).
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+pub enum MpkEnabled {
+    /// Use MPK if supported by the current system; fall back to guard regions
+    /// otherwise.
+    Auto,
+    /// Use MPK or fail if not supported.
+    Enable,
+    /// Do not use MPK.
+    Disable,
 }
 
 /// Configuration options used with [`InstanceAllocationStrategy::Pooling`] to

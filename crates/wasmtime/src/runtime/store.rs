@@ -85,8 +85,7 @@ use crate::runtime::vm::mpk::{self, ProtectionKey, ProtectionMask};
 use crate::runtime::vm::{
     Backtrace, ExportGlobal, GcRootsList, GcStore, InstanceAllocationRequest, InstanceAllocator,
     InstanceHandle, Interpreter, InterpreterRef, ModuleRuntimeInfo, OnDemandInstanceAllocator,
-    SignalHandler, StoreBox, StorePtr, Unwind, UnwindHost, UnwindPulley, VMContext, VMFuncRef,
-    VMGcRef, VMRuntimeLimits,
+    SignalHandler, StoreBox, StorePtr, Unwind, VMContext, VMFuncRef, VMGcRef, VMRuntimeLimits,
 };
 use crate::trampoline::VMHostGlobalContext;
 use crate::type_registry::RegisteredType;
@@ -103,6 +102,7 @@ use core::num::NonZeroU64;
 use core::ops::{Deref, DerefMut, Range};
 use core::pin::Pin;
 use core::ptr;
+use core::ptr::NonNull;
 use core::task::{Context, Poll};
 use wasmtime_environ::TripleExt;
 
@@ -222,6 +222,7 @@ pub struct StoreInner<T> {
 
     limiter: Option<ResourceLimiterInner<T>>,
     call_hook: Option<CallHookInner<T>>,
+    #[cfg(target_has_atomic = "64")]
     epoch_deadline_behavior:
         Option<Box<dyn FnMut(StoreContextMut<T>) -> Result<UpdateDeadline> + Send + Sync>>,
     // for comments about `ManuallyDrop`, see `Store::into_data`
@@ -390,10 +391,28 @@ pub struct StoreOpaque {
     #[cfg(feature = "component-model")]
     host_resource_data: crate::component::HostResourceData,
 
-    /// State related to the Pulley interpreter if that's enabled and configured
-    /// for this store's `Engine`. This is `None` if pulley was disabled at
-    /// compile time or if it's not being used by the `Engine`.
-    interpreter: Option<Interpreter>,
+    /// State related to the executor of wasm code.
+    ///
+    /// For example if Pulley is enabled and configured then this will store a
+    /// Pulley interpreter.
+    executor: Executor,
+}
+
+/// Executor state within `StoreOpaque`.
+///
+/// Effectively stores Pulley interpreter state and handles conditional support
+/// for Cranelift at compile time.
+enum Executor {
+    Interpreter(Interpreter),
+    #[cfg(has_host_compiler_backend)]
+    Native,
+}
+
+/// A borrowed reference to `Executor` above.
+pub(crate) enum ExecutorRef<'a> {
+    Interpreter(InterpreterRef<'a>),
+    #[cfg(has_host_compiler_backend)]
+    Native,
 }
 
 #[cfg(feature = "async")]
@@ -582,14 +601,21 @@ impl<T> Store<T> {
                 component_calls: Default::default(),
                 #[cfg(feature = "component-model")]
                 host_resource_data: Default::default(),
-                interpreter: if cfg!(feature = "pulley") && engine.target().is_pulley() {
-                    Some(Interpreter::new(engine))
+                #[cfg(has_host_compiler_backend)]
+                executor: if cfg!(feature = "pulley") && engine.target().is_pulley() {
+                    Executor::Interpreter(Interpreter::new(engine))
                 } else {
-                    None
+                    Executor::Native
+                },
+                #[cfg(not(has_host_compiler_backend))]
+                executor: {
+                    debug_assert!(engine.target().is_pulley());
+                    Executor::Interpreter(Interpreter::new(engine))
                 },
             },
             limiter: None,
             call_hook: None,
+            #[cfg(target_has_atomic = "64")]
             epoch_deadline_behavior: None,
             data: ManuallyDrop::new(data),
         });
@@ -628,9 +654,9 @@ impl<T> Store<T> {
             // maintain throughout Wasmtime.
             unsafe {
                 let traitobj = mem::transmute::<
-                    *mut (dyn crate::runtime::vm::VMStore + '_),
-                    *mut (dyn crate::runtime::vm::VMStore + 'static),
-                >(&mut *inner);
+                    NonNull<dyn crate::runtime::vm::VMStore + '_>,
+                    NonNull<dyn crate::runtime::vm::VMStore + 'static>,
+                >(NonNull::from(&mut *inner));
                 instance.set_store(traitobj);
                 instance
             }
@@ -971,6 +997,7 @@ impl<T> Store<T> {
     /// See documentation on
     /// [`Config::epoch_interruption()`](crate::Config::epoch_interruption)
     /// for an introduction to epoch-based interruption.
+    #[cfg(target_has_atomic = "64")]
     pub fn set_epoch_deadline(&mut self, ticks_beyond_current: u64) {
         self.inner.set_epoch_deadline(ticks_beyond_current);
     }
@@ -1001,6 +1028,7 @@ impl<T> Store<T> {
     /// See documentation on
     /// [`Config::epoch_interruption()`](crate::Config::epoch_interruption)
     /// for an introduction to epoch-based interruption.
+    #[cfg(target_has_atomic = "64")]
     pub fn epoch_deadline_trap(&mut self) {
         self.inner.epoch_deadline_trap();
     }
@@ -1032,6 +1060,7 @@ impl<T> Store<T> {
     /// See documentation on
     /// [`Config::epoch_interruption()`](crate::Config::epoch_interruption)
     /// for an introduction to epoch-based interruption.
+    #[cfg(target_has_atomic = "64")]
     pub fn epoch_deadline_callback(
         &mut self,
         callback: impl FnMut(StoreContextMut<T>) -> Result<UpdateDeadline> + Send + Sync + 'static,
@@ -1062,7 +1091,7 @@ impl<T> Store<T> {
     /// See documentation on
     /// [`Config::epoch_interruption()`](crate::Config::epoch_interruption)
     /// for an introduction to epoch-based interruption.
-    #[cfg(feature = "async")]
+    #[cfg(all(feature = "async", target_has_atomic = "64"))]
     pub fn epoch_deadline_async_yield_and_update(&mut self, delta: u64) {
         self.inner.epoch_deadline_async_yield_and_update(delta);
     }
@@ -1160,6 +1189,7 @@ impl<'a, T> StoreContextMut<'a, T> {
     /// Sets the epoch deadline to a certain number of ticks in the future.
     ///
     /// For more information see [`Store::set_epoch_deadline`].
+    #[cfg(target_has_atomic = "64")]
     pub fn set_epoch_deadline(&mut self, ticks_beyond_current: u64) {
         self.0.set_epoch_deadline(ticks_beyond_current);
     }
@@ -1167,6 +1197,7 @@ impl<'a, T> StoreContextMut<'a, T> {
     /// Configures epoch-deadline expiration to trap.
     ///
     /// For more information see [`Store::epoch_deadline_trap`].
+    #[cfg(target_has_atomic = "64")]
     pub fn epoch_deadline_trap(&mut self) {
         self.0.epoch_deadline_trap();
     }
@@ -1176,7 +1207,7 @@ impl<'a, T> StoreContextMut<'a, T> {
     ///
     /// For more information see
     /// [`Store::epoch_deadline_async_yield_and_update`].
-    #[cfg(feature = "async")]
+    #[cfg(all(feature = "async", target_has_atomic = "64"))]
     pub fn epoch_deadline_async_yield_and_update(&mut self, delta: u64) {
         self.0.epoch_deadline_async_yield_and_update(delta);
     }
@@ -1519,9 +1550,9 @@ impl StoreOpaque {
             // First enumerate all the host-created globals.
             for global in temp.host_globals.iter() {
                 let export = ExportGlobal {
-                    definition: &mut (*global.get()).global as *mut _,
-                    vmctx: core::ptr::null_mut(),
-                    global: (*global.get()).ty.to_wasm_type(),
+                    definition: NonNull::from(&mut global.get().as_mut().global),
+                    vmctx: None,
+                    global: global.get().as_ref().ty.to_wasm_type(),
                 };
                 let global = Global::from_wasmtime_global(export, temp.store);
                 f(temp.store, global);
@@ -1896,7 +1927,7 @@ impl StoreOpaque {
     ///
     /// This only works on async futures and stores, and assumes that we're
     /// executing on a fiber. This will yield execution back to the caller once.
-    #[cfg(feature = "async")]
+    #[cfg(all(feature = "async", target_has_atomic = "64"))]
     fn async_yield_impl(&mut self) -> Result<()> {
         use crate::runtime::vm::Yield;
 
@@ -1923,17 +1954,17 @@ impl StoreOpaque {
     }
 
     #[inline]
-    pub fn vmruntime_limits(&self) -> *mut VMRuntimeLimits {
-        &self.runtime_limits as *const VMRuntimeLimits as *mut VMRuntimeLimits
+    pub fn vmruntime_limits(&self) -> NonNull<VMRuntimeLimits> {
+        NonNull::from(&self.runtime_limits)
     }
 
     #[inline]
-    pub fn default_caller(&self) -> *mut VMContext {
+    pub fn default_caller(&self) -> NonNull<VMContext> {
         self.default_caller.vmctx()
     }
 
     #[inline]
-    pub fn traitobj(&self) -> *mut dyn crate::runtime::vm::VMStore {
+    pub fn traitobj(&self) -> NonNull<dyn crate::runtime::vm::VMStore> {
         self.default_caller.traitobj(self)
     }
 
@@ -2147,16 +2178,19 @@ at https://bytecodealliance.org/security.
         }
     }
 
-    pub(crate) fn interpreter(&mut self) -> Option<InterpreterRef<'_>> {
-        let i = self.interpreter.as_mut()?;
-        Some(i.as_interpreter_ref())
+    pub(crate) fn executor(&mut self) -> ExecutorRef<'_> {
+        match &mut self.executor {
+            Executor::Interpreter(i) => ExecutorRef::Interpreter(i.as_interpreter_ref()),
+            #[cfg(has_host_compiler_backend)]
+            Executor::Native => ExecutorRef::Native,
+        }
     }
 
     pub(crate) fn unwinder(&self) -> &'static dyn Unwind {
-        if self.interpreter.is_some() {
-            &UnwindPulley
-        } else {
-            &UnwindHost
+        match &self.executor {
+            Executor::Interpreter(_) => &crate::runtime::vm::UnwindPulley,
+            #[cfg(has_host_compiler_backend)]
+            Executor::Native => &crate::runtime::vm::UnwindHost,
         }
     }
 }
@@ -2661,6 +2695,7 @@ unsafe impl<T> crate::runtime::vm::VMStore for StoreInner<T> {
         Ok(())
     }
 
+    #[cfg(target_has_atomic = "64")]
     fn new_epoch(&mut self) -> Result<u64, anyhow::Error> {
         // Temporarily take the configured behavior to avoid mutably borrowing
         // multiple times.
@@ -2742,6 +2777,7 @@ unsafe impl<T> crate::runtime::vm::VMStore for StoreInner<T> {
 }
 
 impl<T> StoreInner<T> {
+    #[cfg(target_has_atomic = "64")]
     pub(crate) fn set_epoch_deadline(&mut self, delta: u64) {
         // Set a new deadline based on the "epoch deadline delta".
         //
@@ -2752,14 +2788,16 @@ impl<T> StoreInner<T> {
         // Also, note that when this update is performed while Wasm is
         // on the stack, the Wasm will reload the new value once we
         // return into it.
-        let epoch_deadline = unsafe { (*self.vmruntime_limits()).epoch_deadline.get_mut() };
+        let epoch_deadline = unsafe { self.vmruntime_limits().as_mut().epoch_deadline.get_mut() };
         *epoch_deadline = self.engine().current_epoch() + delta;
     }
 
+    #[cfg(target_has_atomic = "64")]
     fn epoch_deadline_trap(&mut self) {
         self.epoch_deadline_behavior = None;
     }
 
+    #[cfg(target_has_atomic = "64")]
     fn epoch_deadline_callback(
         &mut self,
         callback: Box<dyn FnMut(StoreContextMut<T>) -> Result<UpdateDeadline> + Send + Sync>,
@@ -2784,7 +2822,7 @@ impl<T> StoreInner<T> {
         // Safety: this is safe because, as above, it is only invoked
         // from within `new_epoch` which is called from guest Wasm
         // code, which will have an exclusive borrow on the Store.
-        let epoch_deadline = unsafe { (*self.vmruntime_limits()).epoch_deadline.get_mut() };
+        let epoch_deadline = unsafe { self.vmruntime_limits().as_mut().epoch_deadline.get_mut() };
         *epoch_deadline
     }
 }
