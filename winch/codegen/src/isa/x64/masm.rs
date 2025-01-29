@@ -1694,9 +1694,11 @@ impl Masm for MacroAssembler {
 
         match kind {
             VectorCompareKind::I8x16S | VectorCompareKind::I16x8S | VectorCompareKind::I32x4S => {
-                // Make the values the signed minimum and then compare them for equality.
-                self.asm.xmm_vpmins_rrr(dst, lhs, rhs, kind.lane_size());
-                self.asm.xmm_vpcmpeq_rrr(dst, rhs, rhs, kind.lane_size());
+                // Set the `rhs` vector to the signed minimum values and then
+                // compare them with `lhs` for equality.
+                self.asm
+                    .xmm_vpmins_rrr(writable!(rhs), lhs, rhs, kind.lane_size());
+                self.asm.xmm_vpcmpeq_rrr(dst, lhs, rhs, kind.lane_size());
             }
             VectorCompareKind::I64x2S => {
                 // Do a greater than check and invert the results.

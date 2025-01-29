@@ -22,7 +22,7 @@
 ;;       movdqu  0x1c(%rip), %xmm0
 ;;       movdqu  0x24(%rip), %xmm1
 ;;       vpminsw %xmm0, %xmm1, %xmm1
-;;       vpcmpeqw %xmm0, %xmm0, %xmm1
+;;       vpcmpeqw %xmm0, %xmm1, %xmm1
 ;;       movdqa  %xmm1, %xmm0
 ;;       addq    $0x10, %rsp
 ;;       popq    %rbp
