@@ -1655,7 +1655,7 @@ impl Masm for MacroAssembler {
                     .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
                 self.asm
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
-                self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
+                self.asm.xmm_rmi_rvex(AvxOpcode::Vpxor, lhs, rhs, dst);
             }
             VectorEqualityKind::F32x4 | VectorEqualityKind::F64x2 => {
                 self.asm
@@ -1694,7 +1694,7 @@ impl Masm for MacroAssembler {
                     .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
                 self.asm
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
-                self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
+                self.asm.xmm_rmi_rvex(AvxOpcode::Vpxor, lhs, rhs, dst);
             }
             VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => {
                 self.asm
@@ -1727,7 +1727,7 @@ impl Masm for MacroAssembler {
                     .xmm_vpcmpgt_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
                 self.asm
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
-                self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
+                self.asm.xmm_rmi_rvex(AvxOpcode::Vpxor, lhs, rhs, dst);
             }
             VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
                 // Set the `rhs` vector to the signed minimum values and then
@@ -1772,7 +1772,7 @@ impl Masm for MacroAssembler {
                     .xmm_vpcmpeq_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
                 self.asm
                     .xmm_vpcmpeq_rrr(writable!(rhs), rhs, rhs, kind.lane_size());
-                self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
+                self.asm.xmm_rmi_rvex(AvxOpcode::Vpxor, lhs, rhs, dst);
             }
             VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => {
                 // Do a less than comparison with the operands swapped.
@@ -1805,7 +1805,8 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vpcmpgt_rrr(writable!(rhs), rhs, lhs, kind.lane_size());
                 self.asm.xmm_vpcmpeq_rrr(dst, lhs, lhs, kind.lane_size());
-                self.asm.xmm_vpxor_rrr(dst, dst.to_reg(), rhs);
+                self.asm
+                    .xmm_rmi_rvex(AvxOpcode::Vpxor, dst.to_reg(), rhs, dst);
             }
             VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
                 // Set lanes to maximum values and compare them for equality.

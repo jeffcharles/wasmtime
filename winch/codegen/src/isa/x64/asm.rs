@@ -1955,17 +1955,6 @@ impl Assembler {
         })
     }
 
-    /// Perform a logical xor operation on vector registers `lhs` and `rhs`
-    /// and put the resulting vector into `dst`.
-    pub fn xmm_vpxor_rrr(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg) {
-        self.emit(Inst::XmmRmiRVex {
-            op: AvxOpcode::Vpxor,
-            src1: lhs.into(),
-            src2: XmmMemImm::unwrap_new(rhs.into()),
-            dst: dst.to_reg().into(),
-        })
-    }
-
     /// Performs a greater than comparison with vectors of signed integers in
     /// `lhs` and `rhs` and puts the results in `dst`.
     pub fn xmm_vpcmpgt_rrr(&mut self, dst: WritableReg, lhs: Reg, rhs: Reg, size: OperandSize) {
