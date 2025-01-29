@@ -1709,10 +1709,11 @@ impl Masm for MacroAssembler {
                 self.asm.xmm_vpxor_rrr(dst, lhs, rhs);
             }
             VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
-                // Maek the values the unsigned minimum and then compare them for equality.
-                self.asm.xmm_vpminu_rrr(dst, lhs, rhs, kind.lane_size());
+                // Set the `rhs` vector to the signed minimum values and then
+                // compare them with `lhs` for equality.
                 self.asm
-                    .xmm_vpcmpeq_rrr(dst, dst.to_reg(), rhs, kind.lane_size());
+                    .xmm_vpminu_rrr(writable!(rhs), lhs, rhs, kind.lane_size());
+                self.asm.xmm_vpcmpeq_rrr(dst, lhs, rhs, kind.lane_size());
             }
             VectorCompareKind::F32x4 | VectorCompareKind::F64x2 => {
                 self.asm
