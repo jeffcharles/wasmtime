@@ -1619,9 +1619,7 @@ impl Masm for MacroAssembler {
         rhs: Reg,
         kind: VectorEqualityKind,
     ) -> Result<()> {
-        if !self.flags.has_avx() {
-            bail!(CodeGenError::UnimplementedForNoAvx)
-        }
+        self.ensure_has_avx()?;
 
         match kind {
             VectorEqualityKind::I8x16
@@ -1645,9 +1643,7 @@ impl Masm for MacroAssembler {
         rhs: Reg,
         kind: VectorEqualityKind,
     ) -> Result<()> {
-        if !self.flags.has_avx() {
-            bail!(CodeGenError::UnimplementedForNoAvx)
-        }
+        self.ensure_has_avx()?;
 
         match kind {
             VectorEqualityKind::I8x16
@@ -1676,9 +1672,7 @@ impl Masm for MacroAssembler {
         rhs: Reg,
         kind: VectorCompareKind,
     ) -> Result<()> {
-        if !self.flags.has_avx() {
-            bail!(CodeGenError::UnimplementedForNoAvx)
-        }
+        self.ensure_has_avx()?;
 
         match kind {
             VectorCompareKind::I8x16S
@@ -1717,9 +1711,7 @@ impl Masm for MacroAssembler {
         rhs: Reg,
         kind: VectorCompareKind,
     ) -> Result<()> {
-        if !self.flags.has_avx() {
-            bail!(CodeGenError::UnimplementedForNoAvx)
-        }
+        self.ensure_has_avx()?;
 
         match kind {
             VectorCompareKind::I8x16S | VectorCompareKind::I16x8S | VectorCompareKind::I32x4S => {
@@ -1759,9 +1751,7 @@ impl Masm for MacroAssembler {
         rhs: Reg,
         kind: VectorCompareKind,
     ) -> Result<()> {
-        if !self.flags.has_avx() {
-            bail!(CodeGenError::UnimplementedForNoAvx)
-        }
+        self.ensure_has_avx()?;
 
         match kind {
             VectorCompareKind::I8x16S
@@ -1800,9 +1790,7 @@ impl Masm for MacroAssembler {
         rhs: Reg,
         kind: VectorCompareKind,
     ) -> Result<()> {
-        if !self.flags.has_avx() {
-            bail!(CodeGenError::UnimplementedForNoAvx)
-        }
+        self.ensure_has_avx()?;
 
         match kind {
             VectorCompareKind::I8x16S | VectorCompareKind::I16x8S | VectorCompareKind::I32x4S => {
