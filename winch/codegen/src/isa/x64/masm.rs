@@ -1663,8 +1663,11 @@ impl Masm for MacroAssembler {
                 self.asm.xmm_vpcmpgt_rrr(dst, rhs, lhs, kind.lane_size())
             }
             VectorCompareKind::I8x16U | VectorCompareKind::I16x8U | VectorCompareKind::I32x4U => {
-                // FIXME this explanation doesn't seem correct.
-                // Set each lane to the lower value and check equality.
+                // Set `lhs` to min values, check for equality, then invert the
+                // result.
+                // If `lhs` is smaller, then equality check will fail and result
+                // will be inverted to true. Otherwise the equality check will
+                // pass and be inverted to false.
                 self.asm
                     .xmm_vpminu_rrr(writable!(lhs), lhs, rhs, kind.lane_size());
                 self.asm
