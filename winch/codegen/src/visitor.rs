@@ -13,7 +13,7 @@ use crate::masm::{
     DivKind, Extend, ExtractLaneKind, FloatCmpKind, IntCmpKind, LoadKind, MacroAssembler,
     MemMoveDirection, MulWideKind, OperandSize, RegImm, RemKind, ReplaceLaneKind, RmwOp,
     RoundingMode, SPOffset, ShiftKind, Signed, SplatKind, SplatLoadKind, StoreKind, TruncKind,
-    V128ConvertKind, VectorCompareKind, VectorEqualityKind, VectorExtendKind, Zero,
+    V128ConvertKind, V128NarrowKind, VectorCompareKind, VectorEqualityKind, VectorExtendKind, Zero,
 };
 
 use crate::reg::{writable, Reg};
@@ -422,6 +422,7 @@ macro_rules! def_unsupported {
     (emit F32x4ConvertI32x4U $($rest:tt)*) => {};
     (emit F64x2ConvertLowI32x4S $($rest:tt)*) => {};
     (emit F64x2ConvertLowI32x4U $($rest:tt)*) => {};
+    (emit I8x16NarrowI16x8S $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3550,6 +3551,14 @@ where
             masm.v128_convert(reg, writable!(reg), V128ConvertKind::I32x4LowU)?;
             Ok(TypedReg::v128(reg))
         })
+    }
+
+    fn visit_i8x16_narrow_i16x8_s(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
+                masm.v128_narrow(src, dst, writable!(dst), V128NarrowKind::I16x8S)?;
+                Ok(TypedReg::v128(dst))
+            })
     }
 
     wasmparser::for_each_visit_simd_operator!(def_unsupported);

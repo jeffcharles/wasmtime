@@ -10,7 +10,7 @@ use crate::masm::{
     DivKind, Extend, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I, IntCmpKind, LaneSelector,
     LoadKind, MacroAssembler as Masm, MulWideKind, OperandSize, RegImm, RemKind, ReplaceLaneKind,
     RmwOp, RoundingMode, ShiftKind, SplatKind, StoreKind, TrapCode, TruncKind, V128ConvertKind,
-    VectorCompareKind, VectorEqualityKind, Zero, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
+    V128NarrowKind, VectorCompareKind, VectorEqualityKind, Zero, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
 };
 use crate::{
     abi::{self, align_to, calculate_frame_adjustment, LocalSlot},
@@ -1933,6 +1933,20 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vsub_rrm(dst.to_reg(), &conversion_constant, dst, OperandSize::S64);
             }
+        }
+        Ok(())
+    }
+
+    fn v128_narrow(
+        &mut self,
+        src1: Reg,
+        src2: Reg,
+        dst: WritableReg,
+        kind: V128NarrowKind,
+    ) -> Result<()> {
+        match kind {
+            V128NarrowKind::I16x8S => self.asm.xmm_vpackss_rrr(src1, src2, dst, OperandSize::S8),
+            _ => todo!(),
         }
         Ok(())
     }

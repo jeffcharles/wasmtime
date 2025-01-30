@@ -522,6 +522,22 @@ impl V128ConvertKind {
     }
 }
 
+/// Types of vector narrowing operations supported by WebAssembly.
+pub(crate) enum V128NarrowKind {
+    /// Narrow 8 lanes of 16-bit integers to 16 lanes of 8-bit integers using
+    /// signed saturation.
+    I16x8S,
+    /// Narrow 8 lanes of 16-bit integers to 16 lanes of 8-bit integers using
+    /// unsigned saturation.
+    I16x8U,
+    /// Narrow 4 lanes of 32-bit integers to 8 lanes of 16-bit integers using
+    /// signed saturation.
+    I32x4S,
+    /// Narrow 4 lanes of 32-bit integers to 8 lanes of 16-bit integers using
+    /// unsigned saturation.
+    I32x4U,
+}
+
 /// Kinds of vector equalities and non-equalities supported by WebAssembly.
 pub(crate) enum VectorEqualityKind {
     /// 16 lanes of 8 bit integers.
@@ -1671,4 +1687,14 @@ pub(crate) trait MacroAssembler {
 
     /// Convert vector of integers to vector of floating points.
     fn v128_convert(&mut self, src: Reg, dst: WritableReg, kind: V128ConvertKind) -> Result<()>;
+
+    /// Convert two input vectors into a smaller lane vector by narrowing each
+    /// lane.
+    fn v128_narrow(
+        &mut self,
+        src1: Reg,
+        src2: Reg,
+        dst: WritableReg,
+        kind: V128NarrowKind,
+    ) -> Result<()>;
 }

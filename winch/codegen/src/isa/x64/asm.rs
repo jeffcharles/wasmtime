@@ -2203,6 +2203,22 @@ impl Assembler {
             dst: dst.to_reg().into(),
         });
     }
+
+    /// Converts a vector of signed integers into a vector of narrower integers
+    /// using saturation to handle overflow.
+    pub fn xmm_vpackss_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S8 => AvxOpcode::Vpacksswb,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.to_reg().into(),
+        })
+    }
 }
 
 /// Captures the region in a MachBuffer where an add-with-immediate instruction would be emitted,
