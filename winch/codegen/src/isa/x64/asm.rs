@@ -2217,7 +2217,23 @@ impl Assembler {
             src1: src1.into(),
             src2: src2.into(),
             dst: dst.to_reg().into(),
-        })
+        });
+    }
+
+    /// Converts a vector of unsigned integers into a vector of narrower
+    /// integers using saturation to handle overflow.
+    pub fn xmm_vpackus_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S8 => AvxOpcode::Vpackuswb,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.to_reg().into(),
+        });
     }
 }
 

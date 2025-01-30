@@ -1944,8 +1944,10 @@ impl Masm for MacroAssembler {
         dst: WritableReg,
         kind: V128NarrowKind,
     ) -> Result<()> {
+        self.ensure_has_avx()?;
         match kind {
             V128NarrowKind::I16x8S => self.asm.xmm_vpackss_rrr(src1, src2, dst, OperandSize::S8),
+            V128NarrowKind::I16x8U => self.asm.xmm_vpackus_rrr(src1, src2, dst, OperandSize::S8),
             _ => todo!(),
         }
         Ok(())
