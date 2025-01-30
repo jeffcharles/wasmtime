@@ -1707,4 +1707,8 @@ pub(crate) trait MacroAssembler {
         dst: WritableReg,
         kind: V128NarrowKind,
     ) -> Result<()>;
+
+    /// Converts a vector containing two 64-bit floating point lanes to two
+    /// 32-bit floating point lanes and setting the two higher lanes to 0.
+    fn v128_demote(&mut self, src: Reg, dst: WritableReg) -> Result<()>;
 }

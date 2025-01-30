@@ -1,7 +1,7 @@
 use super::{
     abi::X64ABI,
     address::Address,
-    asm::{Assembler, PatchableAddToReg, VcmpKind},
+    asm::{Assembler, PatchableAddToReg, VcmpKind, VcvtKind},
     regs::{self, rbp, rsp},
 };
 use anyhow::{anyhow, bail, Result};
@@ -1887,7 +1887,8 @@ impl Masm for MacroAssembler {
         self.ensure_has_avx()?;
         match kind {
             V128ConvertKind::I32x4S | V128ConvertKind::I32x4LowS => {
-                self.asm.xmm_vcvt_rr(src, dst, &kind)
+                self.asm
+                    .xmm_vcvt_rr(src, dst, VcvtKind::DoublewordIntegers2SingleFloats)
             }
             V128ConvertKind::I32x4U => {
                 let scratch = writable!(regs::scratch_xmm());
@@ -1902,15 +1903,18 @@ impl Masm for MacroAssembler {
                     .xmm_vpsub_rrr(src, scratch.to_reg(), dst, kind.lane_size());
 
                 // Convert the low bits in `scratch` to floating point numbers.
-                self.asm
-                    .xmm_vcvt_rr(scratch.to_reg(), scratch, &V128ConvertKind::I32x4S);
+                self.asm.xmm_vcvt_rr(
+                    scratch.to_reg(),
+                    scratch,
+                    VcvtKind::DoublewordIntegers2SingleFloats,
+                );
 
                 // Prevent overflow by right shifting high bits.
                 self.asm
                     .xmm_vpsrl_rr(dst.to_reg(), dst, 1, kind.lane_size());
                 // Convert high bits in `dst` to floating point numbers.
                 self.asm
-                    .xmm_vcvt_rr(dst.to_reg(), dst, &V128ConvertKind::I32x4S);
+                    .xmm_vcvt_rr(dst.to_reg(), dst, VcvtKind::DoublewordIntegers2SingleFloats);
                 // Double high bits in `dst` to reverse right shift.
                 self.asm
                     .xmm_vaddp_rrr(dst.to_reg(), dst.to_reg(), dst, kind.lane_size());
@@ -1955,6 +1959,12 @@ impl Masm for MacroAssembler {
                     .xmm_vpackus_rrr(src1, src2, dst, kind.dst_lane_size())
             }
         }
+        Ok(())
+    }
+
+    fn v128_demote(&mut self, src: Reg, dst: WritableReg) -> Result<()> {
+        self.asm
+            .xmm_vcvt_rr(src, dst, VcvtKind::DoubleFloats2SingleFloats);
         Ok(())
     }
 }

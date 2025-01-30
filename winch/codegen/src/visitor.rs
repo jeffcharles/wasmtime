@@ -426,6 +426,7 @@ macro_rules! def_unsupported {
     (emit I8x16NarrowI16x8U $($rest:tt)*) => {};
     (emit I16x8NarrowI32x4S $($rest:tt)*) => {};
     (emit I16x8NarrowI32x4U $($rest:tt)*) => {};
+    (emit F32x4DemoteF64x2Zero $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3586,6 +3587,13 @@ where
                 masm.v128_narrow(src, dst, writable!(dst), V128NarrowKind::I32x4U)?;
                 Ok(TypedReg::v128(dst))
             })
+    }
+
+    fn visit_f32x4_demote_f64x2_zero(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_demote(reg, writable!(reg))?;
+            Ok(TypedReg::v128(reg))
+        })
     }
 
     wasmparser::for_each_visit_simd_operator!(def_unsupported);

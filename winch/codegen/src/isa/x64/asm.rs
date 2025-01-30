@@ -4,7 +4,7 @@ use crate::{
     isa::{reg::Reg, CallingConvention},
     masm::{
         DivKind, Extend, ExtendKind, ExtendType, IntCmpKind, MulWideKind, OperandSize, RemKind,
-        RoundingMode, ShiftKind, Signed, V128ConvertKind, VectorExtendKind, Zero,
+        RoundingMode, ShiftKind, Signed, VectorExtendKind, Zero,
     },
     reg::writable,
     x64::regs::scratch,
@@ -188,6 +188,14 @@ pub(super) enum VcmpKind {
     Lt,
     /// Less than or equal comparison.
     Le,
+}
+
+/// Kinds of conversions supported by `vcvt`.
+pub(super) enum VcvtKind {
+    /// Converts doubleword integers to double precision floats.
+    DoublewordIntegers2SingleFloats,
+    /// Converts double precision floats to single precision floats.
+    DoubleFloats2SingleFloats,
 }
 
 /// Low level assembler implementation for x64.
@@ -1937,10 +1945,10 @@ impl Assembler {
     }
 
     /// Converts vector of integers into vector of floating values.
-    pub fn xmm_vcvt_rr(&mut self, src: Reg, dst: WritableReg, kind: &V128ConvertKind) {
+    pub fn xmm_vcvt_rr(&mut self, src: Reg, dst: WritableReg, kind: VcvtKind) {
         let op = match kind {
-            V128ConvertKind::I32x4S | V128ConvertKind::I32x4LowS => AvxOpcode::Vcvtdq2ps,
-            _ => unimplemented!(),
+            VcvtKind::DoublewordIntegers2SingleFloats => AvxOpcode::Vcvtdq2ps,
+            VcvtKind::DoubleFloats2SingleFloats => AvxOpcode::Vcvtpd2ps,
         };
 
         self.emit(Inst::XmmUnaryRmRVex {

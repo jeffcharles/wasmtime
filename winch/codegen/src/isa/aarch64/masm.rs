@@ -1115,6 +1115,10 @@ impl Masm for MacroAssembler {
     ) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
+
+    fn v128_demote(&mut self, _src: Reg, _dst: WritableReg) -> Result<()> {
+        bail!(CodeGenError::unimplemented_masm_instruction())
+    }
 }
 
 impl MacroAssembler {
