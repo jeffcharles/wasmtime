@@ -1927,13 +1927,19 @@ impl Masm for MacroAssembler {
                     .xmm_vaddp_rrr(dst.to_reg(), scratch.to_reg(), dst, kind.lane_size());
             }
             V128ConvertKind::I32x4LowU => {
-                let address_to_zero_vector = self.asm.add_constant(&[0; 16]);
+                // See
+                // https://github.com/bytecodealliance/wasmtime/blob/bb886ffc3c81a476d8ba06311ff2dede15a6f7e1/cranelift/codegen/src/isa/x64/lower.isle#L3668
+                // for details on the Cranelift AVX implementation.
+                // Use `vunpcklp` to create doubles from the integers.
+                // Interleaving 0x1.0p52 (i.e., 0x43300000) with the integers
+                // creates a byte array for a double that sets the mantissa
+                // bits to the original integer value.
+                let address_to_zero_vector = self
+                    .asm
+                    .add_constant(&[0x00, 0x00, 0x30, 0x43, 0x00, 0x00, 0x30, 0x43]);
                 self.asm
                     .xmm_vunpcklp_rrm(src, &address_to_zero_vector, dst, OperandSize::S32);
-                // When this constant is subtracted from an integer value that
-                // has been placed in the bits of double-precision float, it
-                // sets the exponent bits of the floating point value and
-                // leaves the mantissa bits representing the original integer value.
+                // Subtract the 0x1.0p52 added above.
                 let conversion_constant = self.asm.add_constant(&[
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x43, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x30, 0x43,
