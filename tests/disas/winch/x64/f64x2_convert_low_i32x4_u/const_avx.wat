@@ -21,7 +21,7 @@
 ;;       movq    %rsi, (%rsp)
 ;;       movdqu  0x1c(%rip), %xmm0
 ;;       vunpcklps 0x24(%rip), %xmm0, %xmm0
-;;       vsubpd  0x1c(%rip), %xmm0, %xmm0
+;;       vsubpd  0x2c(%rip), %xmm0, %xmm0
 ;;       addq    $0x10, %rsp
 ;;       popq    %rbp
 ;;       retq
@@ -39,3 +39,11 @@
 ;;   60: addb    %al, (%rax)
 ;;   62: addb    %al, (%rax)
 ;;   64: addb    %al, (%rax)
+;;   66: addb    %al, (%rax)
+;;   68: addb    %al, (%rax)
+;;   6a: addb    %al, (%rax)
+;;   6c: addb    %al, (%rax)
+;;   6e: addb    %al, (%rax)
+;;   70: addb    %al, (%rax)
+;;   72: addb    %al, (%rax)
+;;   74: addb    %al, (%rax)

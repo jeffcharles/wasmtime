@@ -1927,9 +1927,9 @@ impl Masm for MacroAssembler {
                     .xmm_vaddp_rrr(dst.to_reg(), scratch.to_reg(), dst, kind.lane_size());
             }
             V128ConvertKind::I32x4LowU => {
-                let address_to_zero = self.asm.add_constant(&[]);
+                let address_to_zero_vector = self.asm.add_constant(&[0; 16]);
                 self.asm
-                    .xmm_vunpcklp_rrm(src, &address_to_zero, dst, OperandSize::S32);
+                    .xmm_vunpcklp_rrm(src, &address_to_zero_vector, dst, OperandSize::S32);
                 // When this constant is subtracted from an integer value that
                 // has been placed in the bits of double-precision float, it
                 // sets the exponent bits of the floating point value and
