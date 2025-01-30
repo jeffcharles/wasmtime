@@ -1950,11 +1950,10 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vpackss_rrr(src1, src2, dst, kind.dst_lane_size())
             }
-            V128NarrowKind::I16x8U => {
+            V128NarrowKind::I16x8U | V128NarrowKind::I32x4U => {
                 self.asm
                     .xmm_vpackus_rrr(src1, src2, dst, kind.dst_lane_size())
             }
-            _ => todo!(),
         }
         Ok(())
     }

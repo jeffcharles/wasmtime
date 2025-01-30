@@ -2226,6 +2226,7 @@ impl Assembler {
     pub fn xmm_vpackus_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
         let op = match size {
             OperandSize::S8 => AvxOpcode::Vpackuswb,
+            OperandSize::S16 => AvxOpcode::Vpackusdw,
             _ => unimplemented!(),
         };
 
