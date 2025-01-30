@@ -1934,11 +1934,11 @@ impl Masm for MacroAssembler {
                 // Interleaving 0x1.0p52 (i.e., 0x43300000) with the integers
                 // creates a byte array for a double that sets the mantissa
                 // bits to the original integer value.
-                let address_to_zero_vector = self
+                let conversion_constant = self
                     .asm
                     .add_constant(&[0x00, 0x00, 0x30, 0x43, 0x00, 0x00, 0x30, 0x43]);
                 self.asm
-                    .xmm_vunpcklp_rrm(src, &address_to_zero_vector, dst, OperandSize::S32);
+                    .xmm_vunpcklp_rrm(src, &conversion_constant, dst, OperandSize::S32);
                 // Subtract the 0x1.0p52 added above.
                 let conversion_constant = self.asm.add_constant(&[
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x43, 0x00, 0x00, 0x00, 0x00, 0x00,
