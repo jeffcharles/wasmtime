@@ -421,6 +421,7 @@ macro_rules! def_unsupported {
     (emit F32x4ConvertI32x4S $($rest:tt)*) => {};
     (emit F32x4ConvertI32x4U $($rest:tt)*) => {};
     (emit F64x2ConvertLowI32x4S $($rest:tt)*) => {};
+    (emit F64x2ConvertLowI32x4U $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3540,6 +3541,13 @@ where
     fn visit_f64x2_convert_low_i32x4_s(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
             masm.v128_convert(reg, writable!(reg), V128ConvertKind::I32x4LowS)?;
+            Ok(TypedReg::v128(reg))
+        })
+    }
+
+    fn visit_f64x2_convert_low_i32x4_u(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_convert(reg, writable!(reg), V128ConvertKind::I32x4LowU)?;
             Ok(TypedReg::v128(reg))
         })
     }

@@ -1918,6 +1918,21 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vaddp_rrr(dst.to_reg(), scratch.to_reg(), dst, kind.lane_size());
             }
+            V128ConvertKind::I32x4LowU => {
+                let address_to_zero = self.asm.add_constant(&[]);
+                self.asm
+                    .xmm_vunpcklp_rrm(src, &address_to_zero, dst, OperandSize::S64);
+                // When this constant is subtracted from an integer value that
+                // has been placed in the bits of double-precision float, it
+                // sets the exponent bits of the floating point value and
+                // leaves the mantissa bits representing the original integer value.
+                let conversion_constant = self.asm.add_constant(
+                    &(f64::from_bits(0x4330000000000000) + f64::from_bits(0x4320000000000000))
+                        .to_le_bytes(),
+                );
+                self.asm
+                    .xmm_vsub_rrm(dst.to_reg(), &conversion_constant, dst, OperandSize::S64);
+            }
         }
         Ok(())
     }

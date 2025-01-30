@@ -507,14 +507,17 @@ pub(crate) enum V128ConvertKind {
     I32x4U,
     /// 4 lanes of signed 32 bit integers to low bits of 64-bit floats.
     I32x4LowS,
+    /// 4 lanes of unsigned 32 bit integers to low bits of 64-bit floats.
+    I32x4LowU,
 }
 
 impl V128ConvertKind {
     pub(crate) fn lane_size(&self) -> OperandSize {
         match self {
-            V128ConvertKind::I32x4S | V128ConvertKind::I32x4U | V128ConvertKind::I32x4LowS => {
-                OperandSize::S32
-            }
+            V128ConvertKind::I32x4S
+            | V128ConvertKind::I32x4U
+            | V128ConvertKind::I32x4LowS
+            | V128ConvertKind::I32x4LowU => OperandSize::S32,
         }
     }
 }

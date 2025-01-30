@@ -2149,6 +2149,60 @@ impl Assembler {
             },
         });
     }
+
+    /// Converts vector of integers in `src` to vector of doubles (setting the
+    ///  low bits) in `dst`.
+    pub fn xmm_vunpcklp_rrm(
+        &mut self,
+        src1: Reg,
+        src2: &Address,
+        dst: WritableReg,
+        dst_size: OperandSize,
+    ) {
+        let op = match dst_size {
+            OperandSize::S64 => AvxOpcode::Vunpcklpd,
+            _ => unimplemented!(),
+        };
+
+        let address = Self::to_synthetic_amode(
+            src2,
+            &mut self.pool,
+            &mut self.constants,
+            &mut self.buffer,
+            MemFlags::trusted(),
+        );
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: XmmMemImm::unwrap_new(RegMemImm::mem(address)),
+            dst: dst.to_reg().into(),
+        });
+    }
+
+    /// Performs a subtraction on two vectors of floats and puts the results in
+    /// `dst`.
+    pub fn xmm_vsub_rrm(&mut self, src1: Reg, src2: &Address, dst: WritableReg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S64 => AvxOpcode::Vsubpd,
+            _ => unimplemented!(),
+        };
+
+        let address = Self::to_synthetic_amode(
+            src2,
+            &mut self.pool,
+            &mut self.constants,
+            &mut self.buffer,
+            MemFlags::trusted(),
+        );
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: XmmMemImm::unwrap_new(RegMemImm::mem(address)),
+            dst: dst.to_reg().into(),
+        });
+    }
 }
 
 /// Captures the region in a MachBuffer where an add-with-immediate instruction would be emitted,
