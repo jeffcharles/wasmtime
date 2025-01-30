@@ -424,6 +424,7 @@ macro_rules! def_unsupported {
     (emit F64x2ConvertLowI32x4U $($rest:tt)*) => {};
     (emit I8x16NarrowI16x8S $($rest:tt)*) => {};
     (emit I8x16NarrowI16x8U $($rest:tt)*) => {};
+    (emit I16x8NarrowI32x4S $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3566,6 +3567,14 @@ where
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
                 masm.v128_narrow(src, dst, writable!(dst), V128NarrowKind::I16x8U)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_i16x8_narrow_i32x4_s(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
+                masm.v128_narrow(src, dst, writable!(dst), V128NarrowKind::I32x4S)?;
                 Ok(TypedReg::v128(dst))
             })
     }

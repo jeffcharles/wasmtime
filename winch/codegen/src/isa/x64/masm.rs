@@ -1946,8 +1946,14 @@ impl Masm for MacroAssembler {
     ) -> Result<()> {
         self.ensure_has_avx()?;
         match kind {
-            V128NarrowKind::I16x8S => self.asm.xmm_vpackss_rrr(src1, src2, dst, OperandSize::S8),
-            V128NarrowKind::I16x8U => self.asm.xmm_vpackus_rrr(src1, src2, dst, OperandSize::S8),
+            V128NarrowKind::I16x8S | V128NarrowKind::I32x4S => {
+                self.asm
+                    .xmm_vpackss_rrr(src1, src2, dst, kind.dst_lane_size())
+            }
+            V128NarrowKind::I16x8U => {
+                self.asm
+                    .xmm_vpackus_rrr(src1, src2, dst, kind.dst_lane_size())
+            }
             _ => todo!(),
         }
         Ok(())

@@ -538,6 +538,16 @@ pub(crate) enum V128NarrowKind {
     I32x4U,
 }
 
+impl V128NarrowKind {
+    /// Return the size of the destination lanes.
+    pub(crate) fn dst_lane_size(&self) -> OperandSize {
+        match self {
+            Self::I16x8S | Self::I16x8U => OperandSize::S8,
+            Self::I32x4S | Self::I32x4U => OperandSize::S16,
+        }
+    }
+}
+
 /// Kinds of vector equalities and non-equalities supported by WebAssembly.
 pub(crate) enum VectorEqualityKind {
     /// 16 lanes of 8 bit integers.
