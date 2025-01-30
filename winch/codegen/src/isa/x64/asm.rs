@@ -2171,10 +2171,10 @@ impl Assembler {
         src1: Reg,
         src2: &Address,
         dst: WritableReg,
-        dst_size: OperandSize,
+        size: OperandSize,
     ) {
-        let op = match dst_size {
-            OperandSize::S64 => AvxOpcode::Vunpcklpd,
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vunpcklps,
             _ => unimplemented!(),
         };
 
