@@ -420,8 +420,6 @@ impl WastTest {
                 // simd-related failures
                 "annotations/simd_lane.wast",
                 "memory64/simd.wast",
-                "misc_testsuite/int-to-float-splat.wast",
-                "misc_testsuite/issue6562.wast",
                 "misc_testsuite/simd/almost-extmul.wast",
                 "misc_testsuite/simd/canonicalize-nan.wast",
                 "misc_testsuite/simd/cvt-from-uint.wast",
@@ -429,7 +427,6 @@ impl WastTest {
                 "spec_testsuite/simd_bit_shift.wast",
                 "spec_testsuite/simd_boolean.wast",
                 "spec_testsuite/simd_const.wast",
-                "spec_testsuite/simd_conversions.wast",
                 "spec_testsuite/simd_f32x4.wast",
                 "spec_testsuite/simd_f32x4_arith.wast",
                 "spec_testsuite/simd_f32x4_pmin_pmax.wast",
@@ -472,12 +469,15 @@ impl WastTest {
             #[cfg(target_arch = "x86_64")]
             if !(std::is_x86_feature_detected!("avx") && std::is_x86_feature_detected!("avx2")) {
                 let unsupported = [
+                    "misc_testsuite/int-to-float-splat.wast",
+                    "misc_testsuite/issue6562.wast",
                     "misc_testsuite/simd/issue6725-no-egraph-panic.wast",
                     "misc_testsuite/simd/replace-lane-preserve.wast",
                     "misc_testsuite/simd/spillslot-size-fuzzbug.wast",
                     "misc_testsuite/winch/_simd_lane.wast",
                     "misc_testsuite/winch/_simd_splat.wast",
                     "spec_testsuite/simd_align.wast",
+                    "spec_testsuite/simd_conversions.wast",
                     "spec_testsuite/simd_f32x4_cmp.wast",
                     "spec_testsuite/simd_f64x2_cmp.wast",
                     "spec_testsuite/simd_i16x8_cmp.wast",
