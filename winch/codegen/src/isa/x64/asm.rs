@@ -196,6 +196,8 @@ pub(super) enum VcvtKind {
     DoublewordIntegers2SingleFloats,
     /// Converts double precision floats to single precision floats.
     DoubleFloats2SingleFloats,
+    /// Converts single precision floats to double precision floats.
+    SingleFloats2DoubleFloats,
 }
 
 /// Low level assembler implementation for x64.
@@ -1949,6 +1951,7 @@ impl Assembler {
         let op = match kind {
             VcvtKind::DoublewordIntegers2SingleFloats => AvxOpcode::Vcvtdq2ps,
             VcvtKind::DoubleFloats2SingleFloats => AvxOpcode::Vcvtpd2ps,
+            VcvtKind::SingleFloats2DoubleFloats => AvxOpcode::Vcvtps2pd,
         };
 
         self.emit(Inst::XmmUnaryRmRVex {

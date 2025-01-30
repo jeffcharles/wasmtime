@@ -427,6 +427,7 @@ macro_rules! def_unsupported {
     (emit I16x8NarrowI32x4S $($rest:tt)*) => {};
     (emit I16x8NarrowI32x4U $($rest:tt)*) => {};
     (emit F32x4DemoteF64x2Zero $($rest:tt)*) => {};
+    (emit F64x2PromoteLowF32x4 $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3592,6 +3593,13 @@ where
     fn visit_f32x4_demote_f64x2_zero(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
             masm.v128_demote(reg, writable!(reg))?;
+            Ok(TypedReg::v128(reg))
+        })
+    }
+
+    fn visit_f64x2_promote_low_f32x4(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_promote(reg, writable!(reg))?;
             Ok(TypedReg::v128(reg))
         })
     }

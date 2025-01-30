@@ -1967,6 +1967,12 @@ impl Masm for MacroAssembler {
             .xmm_vcvt_rr(src, dst, VcvtKind::DoubleFloats2SingleFloats);
         Ok(())
     }
+
+    fn v128_promote(&mut self, src: Reg, dst: WritableReg) -> Result<()> {
+        self.asm
+            .xmm_vcvt_rr(src, dst, VcvtKind::SingleFloats2DoubleFloats);
+        Ok(())
+    }
 }
 
 impl MacroAssembler {
