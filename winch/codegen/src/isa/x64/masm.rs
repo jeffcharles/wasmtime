@@ -1886,7 +1886,9 @@ impl Masm for MacroAssembler {
     fn v128_convert(&mut self, src: Reg, dst: WritableReg, kind: V128ConvertKind) -> Result<()> {
         self.ensure_has_avx()?;
         match kind {
-            V128ConvertKind::I32x4S => self.asm.xmm_vcvt_rr(src, dst, &kind),
+            V128ConvertKind::I32x4S | V128ConvertKind::I32x4LowS => {
+                self.asm.xmm_vcvt_rr(src, dst, &kind)
+            }
             V128ConvertKind::I32x4U => {
                 let scratch = writable!(regs::scratch_xmm());
 

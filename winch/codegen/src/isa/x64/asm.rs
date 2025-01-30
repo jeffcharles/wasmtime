@@ -1939,7 +1939,7 @@ impl Assembler {
     /// Converts vector of integers into vector of floating values.
     pub fn xmm_vcvt_rr(&mut self, src: Reg, dst: WritableReg, kind: &V128ConvertKind) {
         let op = match kind {
-            V128ConvertKind::I32x4S => AvxOpcode::Vcvtdq2ps,
+            V128ConvertKind::I32x4S | V128ConvertKind::I32x4LowS => AvxOpcode::Vcvtdq2ps,
             _ => unimplemented!(),
         };
 
