@@ -47,3 +47,7 @@
 ;;   70: addb    %al, (%rax)
 ;;   72: addb    %al, (%rax)
 ;;   74: addb    %al, (%rax)
+;;   76: xorb    %al, (%rbx)
+;;   79: addb    %al, (%rax)
+;;   7b: addb    %al, (%rax)
+;;   7d: addb    %dh, (%rax)

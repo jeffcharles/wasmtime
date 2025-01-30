@@ -1934,10 +1934,10 @@ impl Masm for MacroAssembler {
                 // has been placed in the bits of double-precision float, it
                 // sets the exponent bits of the floating point value and
                 // leaves the mantissa bits representing the original integer value.
-                let conversion_constant = self.asm.add_constant(
-                    &(f64::from_bits(0x4330000000000000) + f64::from_bits(0x4320000000000000))
-                        .to_le_bytes(),
-                );
+                let conversion_constant = self.asm.add_constant(&[
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x43, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x30, 0x43,
+                ]);
                 self.asm
                     .xmm_vsub_rrm(dst.to_reg(), &conversion_constant, dst, OperandSize::S64);
             }
