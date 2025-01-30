@@ -20,7 +20,7 @@
 ;;       movq    %rdi, 8(%rsp)
 ;;       movq    %rsi, (%rsp)
 ;;       movdqu  0xc(%rip), %xmm0
-;;       vcvtdq2ps %xmm0, %xmm0
+;;       vcvtdq2pd %xmm0, %xmm0
 ;;       addq    $0x10, %rsp
 ;;       popq    %rbp
 ;;       retq

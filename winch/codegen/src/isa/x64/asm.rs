@@ -192,8 +192,10 @@ pub(super) enum VcmpKind {
 
 /// Kinds of conversions supported by `vcvt`.
 pub(super) enum VcvtKind {
-    /// Converts doubleword integers to double precision floats.
+    /// Converts doubleword integers to single precision floats.
     DoublewordIntegers2SingleFloats,
+    /// Converts doubleword integers to double precision floats.
+    DoublewordIntegers2DoubleFloats,
     /// Converts double precision floats to single precision floats.
     DoubleFloats2SingleFloats,
     /// Converts single precision floats to double precision floats.
@@ -1950,6 +1952,7 @@ impl Assembler {
     pub fn xmm_vcvt_rr(&mut self, src: Reg, dst: WritableReg, kind: VcvtKind) {
         let op = match kind {
             VcvtKind::DoublewordIntegers2SingleFloats => AvxOpcode::Vcvtdq2ps,
+            VcvtKind::DoublewordIntegers2DoubleFloats => AvxOpcode::Vcvtdq2pd,
             VcvtKind::DoubleFloats2SingleFloats => AvxOpcode::Vcvtpd2ps,
             VcvtKind::SingleFloats2DoubleFloats => AvxOpcode::Vcvtps2pd,
         };
