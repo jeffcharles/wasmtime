@@ -2003,6 +2003,13 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vpmov_rr(src, dst, VectorExtendKind::V128Extend8x8U)
             }
+            V128ExtendKind::HighI8x16U => {
+                let scratch = regs::scratch_xmm();
+                self.asm
+                    .xmm_rmi_rvex(AvxOpcode::Vpxor, scratch, scratch, writable!(scratch));
+                self.asm
+                    .xmm_vpunpckh_rrr(src, scratch, dst, OperandSize::S8);
+            }
             _ => todo!(),
         }
         Ok(())
