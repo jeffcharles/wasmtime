@@ -4,7 +4,7 @@ use crate::{
     isa::{reg::Reg, CallingConvention},
     masm::{
         DivKind, Extend, ExtendKind, ExtendType, IntCmpKind, MulWideKind, OperandSize, RemKind,
-        RoundingMode, ShiftKind, Signed, V128ExtendKind, VectorExtendKind, Zero,
+        RoundingMode, ShiftKind, Signed, V128ExtendKind, V128LoadExtendKind, Zero,
     },
     reg::writable,
     x64::regs::scratch,
@@ -207,15 +207,15 @@ impl From<VpmovKind> for AvxOpcode {
     }
 }
 
-impl From<VectorExtendKind> for VpmovKind {
-    fn from(value: VectorExtendKind) -> Self {
+impl From<V128LoadExtendKind> for VpmovKind {
+    fn from(value: V128LoadExtendKind) -> Self {
         match value {
-            VectorExtendKind::V128Extend8x8S => Self::E8x8S,
-            VectorExtendKind::V128Extend8x8U => Self::E8x8U,
-            VectorExtendKind::V128Extend16x4S => Self::E16x4S,
-            VectorExtendKind::V128Extend16x4U => Self::E16x4U,
-            VectorExtendKind::V128Extend32x2S => Self::E32x2S,
-            VectorExtendKind::V128Extend32x2U => Self::E32x2U,
+            V128LoadExtendKind::E8x8S => Self::E8x8S,
+            V128LoadExtendKind::E8x8U => Self::E8x8U,
+            V128LoadExtendKind::E16x4S => Self::E16x4S,
+            V128LoadExtendKind::E16x4U => Self::E16x4U,
+            V128LoadExtendKind::E32x2S => Self::E32x2S,
+            V128LoadExtendKind::E32x2U => Self::E32x2U,
         }
     }
 }
