@@ -2007,7 +2007,15 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vpunpckh_rrr(src, scratch, dst, kind.src_lane_size());
             }
-            _ => todo!(),
+            V128ExtendKind::HighI32x4S => {
+                // Move the 3rd element (i.e., 0b10) to the 1st (rightmost)
+                // position and the 4th element (i.e., 0b11) to the 2nd (second
+                // from the right) position and then perform the extend.
+                self.asm
+                    .xmm_vpshuf_rr(src, dst, 0b11_10_11_10, kind.src_lane_size());
+                self.asm.xmm_vpmov_rr(dst.to_reg(), dst, kind.into());
+            }
+            V128ExtendKind::LowI32x4U | V128ExtendKind::HighI32x4U => todo!(),
         }
         Ok(())
     }
