@@ -1999,6 +1999,10 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vpmov_rr(dst.to_reg(), dst, VectorExtendKind::V128Extend8x8S);
             }
+            V128ExtendKind::LowI8x16U => {
+                self.asm
+                    .xmm_vpmov_rr(src, dst, VectorExtendKind::V128Extend8x8U)
+            }
             _ => todo!(),
         }
         Ok(())
