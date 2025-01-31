@@ -4,7 +4,7 @@ use crate::{
     isa::{reg::Reg, CallingConvention},
     masm::{
         DivKind, Extend, ExtendKind, ExtendType, IntCmpKind, MulWideKind, OperandSize, RemKind,
-        RoundingMode, ShiftKind, Signed, VectorExtendKind, Zero,
+        RoundingMode, ShiftKind, Signed, V128ExtendKind, VectorExtendKind, Zero,
     },
     reg::writable,
     x64::regs::scratch,
@@ -178,15 +178,58 @@ impl From<ExtendKind> for ExtMode {
     }
 }
 
-impl From<VectorExtendKind> for AvxOpcode {
+/// Kinds of extends supported by `vpmov`.
+pub(super) enum VpmovKind {
+    /// Sign extends 8 lanes of 8-bit integers to 8 lanes of 16-bit integers.
+    E8x8S,
+    /// Zero extends 8 lanes of 8-bit integers to 8 lanes of 16-bit integers.
+    E8x8U,
+    /// Sign extends 4 lanes of 16-bit integers to 4 lanes of 32-bit integers.
+    E16x4S,
+    /// Zero extends 4 lanes of 16-bit integers to 4 lanes of 32-bit integers.
+    E16x4U,
+    /// Sign extends 2 lanes of 32-bit integers to 2 lanes of 64-bit integers.
+    E32x2S,
+    /// Zero extends 2 lanes of 32-bit integers to 2 lanes of 64-bit integers.
+    E32x2U,
+}
+
+impl From<VpmovKind> for AvxOpcode {
+    fn from(value: VpmovKind) -> Self {
+        match value {
+            VpmovKind::E8x8S => AvxOpcode::Vpmovsxbw,
+            VpmovKind::E8x8U => AvxOpcode::Vpmovzxbw,
+            VpmovKind::E16x4S => AvxOpcode::Vpmovsxwd,
+            VpmovKind::E16x4U => AvxOpcode::Vpmovzxwd,
+            VpmovKind::E32x2S => AvxOpcode::Vpmovsxdq,
+            VpmovKind::E32x2U => AvxOpcode::Vpmovzxdq,
+        }
+    }
+}
+
+impl From<VectorExtendKind> for VpmovKind {
     fn from(value: VectorExtendKind) -> Self {
         match value {
-            VectorExtendKind::V128Extend8x8S => AvxOpcode::Vpmovsxbw,
-            VectorExtendKind::V128Extend8x8U => AvxOpcode::Vpmovzxbw,
-            VectorExtendKind::V128Extend16x4S => AvxOpcode::Vpmovsxwd,
-            VectorExtendKind::V128Extend16x4U => AvxOpcode::Vpmovzxwd,
-            VectorExtendKind::V128Extend32x2S => AvxOpcode::Vpmovsxdq,
-            VectorExtendKind::V128Extend32x2U => AvxOpcode::Vpmovzxdq,
+            VectorExtendKind::V128Extend8x8S => Self::E8x8S,
+            VectorExtendKind::V128Extend8x8U => Self::E8x8U,
+            VectorExtendKind::V128Extend16x4S => Self::E16x4S,
+            VectorExtendKind::V128Extend16x4U => Self::E16x4U,
+            VectorExtendKind::V128Extend32x2S => Self::E32x2S,
+            VectorExtendKind::V128Extend32x2U => Self::E32x2U,
+        }
+    }
+}
+
+impl From<V128ExtendKind> for VpmovKind {
+    fn from(value: V128ExtendKind) -> Self {
+        match value {
+            V128ExtendKind::LowI8x16S | V128ExtendKind::HighI8x16S => Self::E8x8S,
+            V128ExtendKind::LowI8x16U => Self::E8x8U,
+            V128ExtendKind::LowI16x8S | V128ExtendKind::HighI16x8S => Self::E16x4S,
+            V128ExtendKind::LowI16x8U => Self::E16x4U,
+            V128ExtendKind::LowI32x4S | V128ExtendKind::HighI32x4S => Self::E32x2S,
+            V128ExtendKind::LowI32x4U => Self::E32x2U,
+            _ => unimplemented!(),
         }
     }
 }
@@ -522,7 +565,7 @@ impl Assembler {
         &mut self,
         src: &Address,
         dst: WritableReg,
-        ext: VectorExtendKind,
+        kind: VpmovKind,
         flags: MemFlags,
     ) {
         assert!(dst.to_reg().is_float());
@@ -536,16 +579,16 @@ impl Assembler {
         );
 
         self.emit(Inst::XmmUnaryRmRVex {
-            op: ext.into(),
+            op: kind.into(),
             src: XmmMem::unwrap_new(RegMem::mem(src)),
             dst: dst.to_reg().into(),
         });
     }
 
     /// Vector extend.
-    pub fn xmm_vpmov_rr(&mut self, src: Reg, dst: WritableReg, ext: VectorExtendKind) {
+    pub fn xmm_vpmov_rr(&mut self, src: Reg, dst: WritableReg, kind: VpmovKind) {
         self.emit(Inst::XmmUnaryRmRVex {
-            op: ext.into(),
+            op: kind.into(),
             src: src.into(),
             dst: dst.to_reg().into(),
         });

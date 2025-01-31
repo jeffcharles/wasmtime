@@ -577,6 +577,23 @@ pub(crate) enum V128ExtendKind {
     HighI32x4U,
 }
 
+impl V128ExtendKind {
+    /// The size of the source's lanes.
+    pub(crate) fn src_lane_size(&self) -> OperandSize {
+        match self {
+            Self::LowI8x16S | Self::LowI8x16U | Self::HighI8x16S | Self::HighI8x16U => {
+                OperandSize::S8
+            }
+            Self::LowI16x8S | Self::LowI16x8U | Self::HighI16x8S | Self::HighI16x8U => {
+                OperandSize::S16
+            }
+            Self::LowI32x4S | Self::LowI32x4U | Self::HighI32x4S | Self::HighI32x4U => {
+                OperandSize::S32
+            }
+        }
+    }
+}
+
 /// Kinds of vector equalities and non-equalities supported by WebAssembly.
 pub(crate) enum VectorEqualityKind {
     /// 16 lanes of 8 bit integers.

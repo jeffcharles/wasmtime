@@ -10,8 +10,8 @@ use crate::masm::{
     DivKind, Extend, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I, IntCmpKind, LaneSelector,
     LoadKind, MacroAssembler as Masm, MulWideKind, OperandSize, RegImm, RemKind, ReplaceLaneKind,
     RmwOp, RoundingMode, ShiftKind, SplatKind, StoreKind, TrapCode, TruncKind, V128ConvertKind,
-    V128ExtendKind, V128NarrowKind, VectorCompareKind, VectorEqualityKind, VectorExtendKind, Zero,
-    TRUSTED_FLAGS, UNTRUSTED_FLAGS,
+    V128ExtendKind, V128NarrowKind, VectorCompareKind, VectorEqualityKind, Zero, TRUSTED_FLAGS,
+    UNTRUSTED_FLAGS,
 };
 use crate::{
     abi::{self, align_to, calculate_frame_adjustment, LocalSlot},
@@ -325,7 +325,8 @@ impl Masm for MacroAssembler {
             }
             LoadKind::VectorExtend(ext) => {
                 self.ensure_has_avx()?;
-                self.asm.xmm_vpmov_mr(&src, dst, ext, UNTRUSTED_FLAGS)
+                self.asm
+                    .xmm_vpmov_mr(&src, dst, ext.into(), UNTRUSTED_FLAGS)
             }
             LoadKind::Splat(_) => {
                 self.ensure_has_avx()?;
@@ -1990,34 +1991,19 @@ impl Masm for MacroAssembler {
     fn v128_extend(&mut self, src: Reg, dst: WritableReg, kind: V128ExtendKind) -> Result<()> {
         self.ensure_has_avx()?;
         match kind {
-            V128ExtendKind::LowI8x16S => {
-                self.asm
-                    .xmm_vpmov_rr(src, dst, VectorExtendKind::V128Extend8x8S)
+            V128ExtendKind::LowI8x16S | V128ExtendKind::LowI8x16U | V128ExtendKind::LowI16x8S => {
+                self.asm.xmm_vpmov_rr(src, dst, kind.into())
             }
-            V128ExtendKind::HighI8x16S => {
+            V128ExtendKind::HighI8x16S | V128ExtendKind::HighI16x8S => {
                 self.asm.xmm_vpalignr_rrr(src, src, dst, 0x8);
-                self.asm
-                    .xmm_vpmov_rr(dst.to_reg(), dst, VectorExtendKind::V128Extend8x8S);
-            }
-            V128ExtendKind::LowI8x16U => {
-                self.asm
-                    .xmm_vpmov_rr(src, dst, VectorExtendKind::V128Extend8x8U)
+                self.asm.xmm_vpmov_rr(dst.to_reg(), dst, kind.into());
             }
             V128ExtendKind::HighI8x16U => {
                 let scratch = regs::scratch_xmm();
                 self.asm
                     .xmm_rmi_rvex(AvxOpcode::Vpxor, scratch, scratch, writable!(scratch));
                 self.asm
-                    .xmm_vpunpckh_rrr(src, scratch, dst, OperandSize::S8);
-            }
-            V128ExtendKind::LowI16x8S => {
-                self.asm
-                    .xmm_vpmov_rr(src, dst, VectorExtendKind::V128Extend16x4S)
-            }
-            V128ExtendKind::HighI16x8S => {
-                self.asm.xmm_vpalignr_rrr(src, src, dst, 0x8);
-                self.asm
-                    .xmm_vpmov_rr(dst.to_reg(), dst, VectorExtendKind::V128Extend16x4S);
+                    .xmm_vpunpckh_rrr(src, scratch, dst, kind.src_lane_size());
             }
             _ => todo!(),
         }
