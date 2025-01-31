@@ -3561,7 +3561,7 @@ where
     fn visit_i8x16_narrow_i16x8_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.v128_narrow(src, dst, writable!(dst), V128NarrowKind::I16x8S)?;
+                masm.v128_narrow(dst, src, writable!(dst), V128NarrowKind::I16x8S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3569,7 +3569,7 @@ where
     fn visit_i8x16_narrow_i16x8_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S16, |masm, dst, src, _size| {
-                masm.v128_narrow(src, dst, writable!(dst), V128NarrowKind::I16x8U)?;
+                masm.v128_narrow(dst, src, writable!(dst), V128NarrowKind::I16x8U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3577,7 +3577,7 @@ where
     fn visit_i16x8_narrow_i32x4_s(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.v128_narrow(src, dst, writable!(dst), V128NarrowKind::I32x4S)?;
+                masm.v128_narrow(dst, src, writable!(dst), V128NarrowKind::I32x4S)?;
                 Ok(TypedReg::v128(dst))
             })
     }
@@ -3585,7 +3585,7 @@ where
     fn visit_i16x8_narrow_i32x4_u(&mut self) -> Self::Output {
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
-                masm.v128_narrow(src, dst, writable!(dst), V128NarrowKind::I32x4U)?;
+                masm.v128_narrow(dst, src, writable!(dst), V128NarrowKind::I32x4U)?;
                 Ok(TypedReg::v128(dst))
             })
     }
