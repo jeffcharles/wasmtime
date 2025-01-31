@@ -2016,7 +2016,7 @@ impl Masm for MacroAssembler {
                     .xmm_vpshuf_rr(src, dst, 0b11_10_11_10, kind.src_lane_size());
                 self.asm.xmm_vpmov_rr(dst.to_reg(), dst, kind.into());
             }
-            V128ExtendKind::HighI32x4U => todo!(),
+            V128ExtendKind::HighI32x4U => todo!(), // need to use `vxorps` not `vpxor`
         }
         Ok(())
     }
