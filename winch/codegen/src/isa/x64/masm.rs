@@ -2010,6 +2010,10 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vpunpckh_rrr(src, scratch, dst, OperandSize::S8);
             }
+            V128ExtendKind::LowI16x8S => {
+                self.asm
+                    .xmm_vpmov_rr(src, dst, VectorExtendKind::V128Extend16x4S)
+            }
             _ => todo!(),
         }
         Ok(())
