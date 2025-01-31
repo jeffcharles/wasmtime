@@ -13,7 +13,8 @@ use crate::masm::{
     DivKind, Extend, ExtractLaneKind, FloatCmpKind, IntCmpKind, LoadKind, MacroAssembler,
     MemMoveDirection, MulWideKind, OperandSize, RegImm, RemKind, ReplaceLaneKind, RmwOp,
     RoundingMode, SPOffset, ShiftKind, Signed, SplatKind, SplatLoadKind, StoreKind, TruncKind,
-    V128ConvertKind, V128NarrowKind, VectorCompareKind, VectorEqualityKind, VectorExtendKind, Zero,
+    V128ConvertKind, V128ExtendKind, V128NarrowKind, VectorCompareKind, VectorEqualityKind,
+    VectorExtendKind, Zero,
 };
 
 use crate::reg::{writable, Reg};
@@ -428,6 +429,7 @@ macro_rules! def_unsupported {
     (emit I16x8NarrowI32x4U $($rest:tt)*) => {};
     (emit F32x4DemoteF64x2Zero $($rest:tt)*) => {};
     (emit F64x2PromoteLowF32x4 $($rest:tt)*) => {};
+    (emit I16x8ExtendLowI8x16S $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3600,6 +3602,13 @@ where
     fn visit_f64x2_promote_low_f32x4(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
             masm.v128_promote(reg, writable!(reg))?;
+            Ok(TypedReg::v128(reg))
+        })
+    }
+
+    fn visit_i16x8_extend_low_i8x16_s(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_extend(reg, writable!(reg), V128ExtendKind::LowI8x16S)?;
             Ok(TypedReg::v128(reg))
         })
     }

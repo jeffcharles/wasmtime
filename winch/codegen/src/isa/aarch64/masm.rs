@@ -16,7 +16,7 @@ use crate::{
         CalleeKind, DivKind, Extend, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I,
         IntCmpKind, LoadKind, MacroAssembler as Masm, MulWideKind, OperandSize, RegImm, RemKind,
         ReplaceLaneKind, RmwOp, RoundingMode, SPOffset, ShiftKind, SplatKind, StackSlot, StoreKind,
-        TrapCode, TruncKind, V128ConvertKind, V128NarrowKind, VectorCompareKind,
+        TrapCode, TruncKind, V128ConvertKind, V128ExtendKind, V128NarrowKind, VectorCompareKind,
         VectorEqualityKind, Zero, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
     },
     stack::TypedReg,
@@ -1121,6 +1121,10 @@ impl Masm for MacroAssembler {
     }
 
     fn v128_promote(&mut self, _src: Reg, _dst: WritableReg) -> Result<()> {
+        bail!(CodeGenError::unimplemented_masm_instruction())
+    }
+
+    fn v128_extend(&mut self, _src: Reg, _dst: WritableReg, _kind: V128ExtendKind) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
 }

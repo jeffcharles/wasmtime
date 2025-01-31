@@ -178,6 +178,19 @@ impl From<ExtendKind> for ExtMode {
     }
 }
 
+impl From<VectorExtendKind> for AvxOpcode {
+    fn from(value: VectorExtendKind) -> Self {
+        match value {
+            VectorExtendKind::V128Extend8x8S => AvxOpcode::Vpmovsxbw,
+            VectorExtendKind::V128Extend8x8U => AvxOpcode::Vpmovzxbw,
+            VectorExtendKind::V128Extend16x4S => AvxOpcode::Vpmovsxwd,
+            VectorExtendKind::V128Extend16x4U => AvxOpcode::Vpmovzxwd,
+            VectorExtendKind::V128Extend32x2S => AvxOpcode::Vpmovsxdq,
+            VectorExtendKind::V128Extend32x2U => AvxOpcode::Vpmovzxdq,
+        }
+    }
+}
+
 /// Kinds of comparisons supported by `vcmp`.
 pub(super) enum VcmpKind {
     /// Equal comparison.
@@ -514,15 +527,6 @@ impl Assembler {
     ) {
         assert!(dst.to_reg().is_float());
 
-        let op = match ext {
-            VectorExtendKind::V128Extend8x8S => AvxOpcode::Vpmovsxbw,
-            VectorExtendKind::V128Extend8x8U => AvxOpcode::Vpmovzxbw,
-            VectorExtendKind::V128Extend16x4S => AvxOpcode::Vpmovsxwd,
-            VectorExtendKind::V128Extend16x4U => AvxOpcode::Vpmovzxwd,
-            VectorExtendKind::V128Extend32x2S => AvxOpcode::Vpmovsxdq,
-            VectorExtendKind::V128Extend32x2U => AvxOpcode::Vpmovzxdq,
-        };
-
         let src = Self::to_synthetic_amode(
             src,
             &mut self.pool,
@@ -532,8 +536,17 @@ impl Assembler {
         );
 
         self.emit(Inst::XmmUnaryRmRVex {
-            op,
+            op: ext.into(),
             src: XmmMem::unwrap_new(RegMem::mem(src)),
+            dst: dst.to_reg().into(),
+        });
+    }
+
+    /// Vector extend.
+    pub fn xmm_vpmov_rr(&mut self, src: Reg, dst: WritableReg, ext: VectorExtendKind) {
+        self.emit(Inst::XmmUnaryRmRVex {
+            op: ext.into(),
+            src: src.into(),
             dst: dst.to_reg().into(),
         });
     }

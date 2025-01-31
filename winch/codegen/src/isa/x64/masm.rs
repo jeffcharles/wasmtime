@@ -10,7 +10,8 @@ use crate::masm::{
     DivKind, Extend, ExtendKind, ExtractLaneKind, FloatCmpKind, Imm as I, IntCmpKind, LaneSelector,
     LoadKind, MacroAssembler as Masm, MulWideKind, OperandSize, RegImm, RemKind, ReplaceLaneKind,
     RmwOp, RoundingMode, ShiftKind, SplatKind, StoreKind, TrapCode, TruncKind, V128ConvertKind,
-    V128NarrowKind, VectorCompareKind, VectorEqualityKind, Zero, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
+    V128ExtendKind, V128NarrowKind, VectorCompareKind, VectorEqualityKind, VectorExtendKind, Zero,
+    TRUSTED_FLAGS, UNTRUSTED_FLAGS,
 };
 use crate::{
     abi::{self, align_to, calculate_frame_adjustment, LocalSlot},
@@ -1973,14 +1974,28 @@ impl Masm for MacroAssembler {
     }
 
     fn v128_demote(&mut self, src: Reg, dst: WritableReg) -> Result<()> {
+        self.ensure_has_avx()?;
         self.asm
             .xmm_vcvt_rr(src, dst, VcvtKind::DoubleFloats2SingleFloats);
         Ok(())
     }
 
     fn v128_promote(&mut self, src: Reg, dst: WritableReg) -> Result<()> {
+        self.ensure_has_avx()?;
         self.asm
             .xmm_vcvt_rr(src, dst, VcvtKind::SingleFloats2DoubleFloats);
+        Ok(())
+    }
+
+    fn v128_extend(&mut self, src: Reg, dst: WritableReg, kind: V128ExtendKind) -> Result<()> {
+        self.ensure_has_avx()?;
+        match kind {
+            V128ExtendKind::LowI8x16S => {
+                self.asm
+                    .xmm_vpmov_rr(src, dst, VectorExtendKind::V128Extend8x8S)
+            }
+            _ => todo!(),
+        }
         Ok(())
     }
 }

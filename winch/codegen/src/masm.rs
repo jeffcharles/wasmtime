@@ -522,7 +522,7 @@ impl V128ConvertKind {
     }
 }
 
-/// Types of vector narrowing operations supported by WebAssembly.
+/// Kinds of vector narrowing operations supported by WebAssembly.
 pub(crate) enum V128NarrowKind {
     /// Narrow 8 lanes of 16-bit integers to 16 lanes of 8-bit integers using
     /// signed saturation.
@@ -546,6 +546,34 @@ impl V128NarrowKind {
             Self::I32x4S | Self::I32x4U => OperandSize::S16,
         }
     }
+}
+
+/// Kinds of vector extending operations supported by WebAssembly.
+pub(crate) enum V128ExtendKind {
+    /// Low half of i8x16 sign extended.
+    LowI8x16S,
+    /// High half of i8x16 sign extended.
+    HighI8x16S,
+    /// Low half of i8x16 zero extended.
+    LowI8x16U,
+    /// High half of i8x16 zero extended.
+    HighI8x16U,
+    /// Low half of i16x8 sign extended.
+    LowI16x8S,
+    /// High half of i16x8 sign extended.
+    HighI16x8S,
+    /// Low half of i16x8 zero extended.
+    LowI16x8U,
+    /// High half of i16x8 zero extended.
+    HighI16x8U,
+    /// Low half of i32x4 sign extended.
+    LowI32x4S,
+    /// High half of i32x4 sign extended.
+    HighI32x4S,
+    /// Low half of i32x4 zero extended.
+    LowI32x4U,
+    /// High half of i32x4 zero extended.
+    HighI32x4U,
 }
 
 /// Kinds of vector equalities and non-equalities supported by WebAssembly.
@@ -1715,4 +1743,8 @@ pub(crate) trait MacroAssembler {
     /// Converts a vector containing four 32-bit floating point lanes to two
     /// 64-bit floating point lanes. Only the two lower lanes are converted.
     fn v128_promote(&mut self, src: Reg, dst: WritableReg) -> Result<()>;
+
+    /// Converts low or high half of the smaller lane vector to a larger lane
+    /// vector.
+    fn v128_extend(&mut self, src: Reg, dst: WritableReg, kind: V128ExtendKind) -> Result<()>;
 }
