@@ -1999,7 +1999,7 @@ impl Masm for MacroAssembler {
                 self.asm.xmm_vpalignr_rrr(src, src, dst, 0x8);
                 self.asm.xmm_vpmov_rr(dst.to_reg(), dst, kind.into());
             }
-            V128ExtendKind::HighI8x16U => {
+            V128ExtendKind::HighI8x16U | V128ExtendKind::HighI16x8U => {
                 let scratch = regs::scratch_xmm();
                 self.asm
                     .xmm_rmi_rvex(AvxOpcode::Vpxor, scratch, scratch, writable!(scratch));

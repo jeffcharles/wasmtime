@@ -2325,6 +2325,7 @@ impl Assembler {
     pub fn xmm_vpunpckh_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
         let op = match size {
             OperandSize::S8 => AvxOpcode::Vpunpckhbw,
+            OperandSize::S16 => AvxOpcode::Vpunpckhwd,
             _ => unimplemented!(),
         };
 

@@ -436,6 +436,7 @@ macro_rules! def_unsupported {
     (emit I32x4ExtendLowI16x8S $($rest:tt)*) => {};
     (emit I32x4ExtendHighI16x8S $($rest:tt)*) => {};
     (emit I32x4ExtendLowI16x8U $($rest:tt)*) => {};
+    (emit I32x4ExtendHighI16x8U $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3657,6 +3658,13 @@ where
     fn visit_i32x4_extend_low_i16x8_u(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
             masm.v128_extend(reg, writable!(reg), V128ExtendKind::LowI16x8U)?;
+            Ok(TypedReg::v128(reg))
+        })
+    }
+
+    fn visit_i32x4_extend_high_i16x8_u(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_extend(reg, writable!(reg), V128ExtendKind::HighI16x8U)?;
             Ok(TypedReg::v128(reg))
         })
     }
