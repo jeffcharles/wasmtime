@@ -2264,6 +2264,18 @@ impl Assembler {
             dst: dst.to_reg().into(),
         });
     }
+
+    /// Concatenates `src1`` and `src2` and shifts right by `imm` and puts
+    /// result in `dst`.
+    pub fn xmm_vpalignr_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, imm: u8) {
+        self.emit(Inst::XmmRmRImmVex {
+            op: AvxOpcode::Vpalignr,
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.to_reg().into(),
+            imm,
+        })
+    }
 }
 
 /// Captures the region in a MachBuffer where an add-with-immediate instruction would be emitted,
