@@ -1995,7 +1995,8 @@ impl Masm for MacroAssembler {
             | V128ExtendKind::LowI8x16U
             | V128ExtendKind::LowI16x8S
             | V128ExtendKind::LowI16x8U
-            | V128ExtendKind::LowI32x4S => self.asm.xmm_vpmov_rr(src, dst, kind.into()),
+            | V128ExtendKind::LowI32x4S
+            | V128ExtendKind::LowI32x4U => self.asm.xmm_vpmov_rr(src, dst, kind.into()),
             V128ExtendKind::HighI8x16S | V128ExtendKind::HighI16x8S => {
                 self.asm.xmm_vpalignr_rrr(src, src, dst, 0x8);
                 self.asm.xmm_vpmov_rr(dst.to_reg(), dst, kind.into());
@@ -2015,7 +2016,7 @@ impl Masm for MacroAssembler {
                     .xmm_vpshuf_rr(src, dst, 0b11_10_11_10, kind.src_lane_size());
                 self.asm.xmm_vpmov_rr(dst.to_reg(), dst, kind.into());
             }
-            V128ExtendKind::LowI32x4U | V128ExtendKind::HighI32x4U => todo!(),
+            V128ExtendKind::HighI32x4U => todo!(),
         }
         Ok(())
     }
