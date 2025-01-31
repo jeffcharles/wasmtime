@@ -2014,6 +2014,11 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vpmov_rr(src, dst, VectorExtendKind::V128Extend16x4S)
             }
+            V128ExtendKind::HighI16x8S => {
+                self.asm.xmm_vpalignr_rrr(src, src, dst, 0x8);
+                self.asm
+                    .xmm_vpmov_rr(dst.to_reg(), dst, VectorExtendKind::V128Extend16x4S);
+            }
             _ => todo!(),
         }
         Ok(())
