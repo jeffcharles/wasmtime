@@ -548,6 +548,7 @@ impl V128NarrowKind {
     }
 }
 
+// FIXME see if there's a way to work this into `VectorExtendKind`
 /// Kinds of vector extending operations supported by WebAssembly.
 pub(crate) enum V128ExtendKind {
     /// Low half of i8x16 sign extended.
