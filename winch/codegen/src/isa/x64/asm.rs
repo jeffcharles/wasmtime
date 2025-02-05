@@ -2105,6 +2105,21 @@ impl Assembler {
             dst: dst.map(Into::into),
         });
     }
+
+    /// Compute the absolute value of elements in vector `src` and put the
+    /// results in `dst`.
+    pub fn xmm_vpabs_rr(&mut self, src: Reg, dst: WritableReg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S8 => AvxOpcode::Vpabsb,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmUnaryRmRVex {
+            op,
+            src: src.into(),
+            dst: dst.to_reg().into(),
+        });
+    }
 }
 
 /// Captures the region in a MachBuffer where an add-with-immediate instruction would be emitted,

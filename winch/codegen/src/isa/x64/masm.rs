@@ -2059,6 +2059,12 @@ impl Masm for MacroAssembler {
 
         Ok(())
     }
+
+    fn v128_abs(&mut self, src: Reg, dst: WritableReg, lane_width: OperandSize) -> Result<()> {
+        self.ensure_has_avx()?;
+        self.asm.xmm_vpabs_rr(src, dst, lane_width);
+        Ok(())
+    }
 }
 
 impl MacroAssembler {

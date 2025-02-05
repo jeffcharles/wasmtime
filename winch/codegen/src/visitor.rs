@@ -437,6 +437,7 @@ macro_rules! def_unsupported {
     (emit I16x8SubSatS $($rest:tt)*) => {};
     (emit I8x16SubSatU $($rest:tt)*) => {};
     (emit I16x8SubSatU $($rest:tt)*) => {};
+    (emit I8x16Abs $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3725,6 +3726,13 @@ where
                 )?;
                 Ok(TypedReg::new(WasmValType::V128, dst))
             })
+    }
+
+    fn visit_i8x16_abs(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_abs(reg, writable!(reg), OperandSize::S8)?;
+            Ok(TypedReg::new(WasmValType::V128, reg))
+        })
     }
 
     wasmparser::for_each_visit_simd_operator!(def_unsupported);

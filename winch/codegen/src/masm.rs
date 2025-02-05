@@ -1689,4 +1689,7 @@ pub(crate) trait MacroAssembler {
         context: &mut CodeGenContext<Emission>,
         lane_width: OperandSize,
     ) -> Result<()>;
+
+    /// Perform an absolute operation on a vector.
+    fn v128_abs(&mut self, src: Reg, dst: WritableReg, lane_width: OperandSize) -> Result<()>;
 }
