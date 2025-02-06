@@ -2062,7 +2062,34 @@ impl Masm for MacroAssembler {
 
     fn v128_abs(&mut self, src: Reg, dst: WritableReg, lane_width: OperandSize) -> Result<()> {
         self.ensure_has_avx()?;
-        self.asm.xmm_vpabs_rr(src, dst, lane_width);
+
+        match lane_width {
+            OperandSize::S8 | OperandSize::S16 | OperandSize::S32 => {
+                self.asm.xmm_vpabs_rr(src, dst, lane_width)
+            }
+            OperandSize::S64 => {
+                let scratch = writable!(regs::scratch_xmm());
+                // Perform an arithmetic right shift of 31 bits. If the number
+                // is positive, this will result in all zeroes in the upper
+                // 32-bits. If the number is negative, this will result in all
+                // ones in the upper 32-bits.
+                self.asm.xmm_vpsra_rri(src, scratch, 0x1f, OperandSize::S32);
+                // Copy the ones and zeroes in the high bits of each 64-bit
+                // lane to the low bits of each 64-bit lane.
+                self.asm
+                    .xmm_vpshuf_rr(scratch.to_reg(), scratch, 0b11_11_01_01, OperandSize::S32);
+                // Flip the bits in lanes that were negative in `src` and leave
+                // the positive lanes as they are. Positive lanes will have a
+                // zero mask in `scratch` so xor doesn't affect them.
+                self.asm
+                    .xmm_vex_rr(AvxOpcode::Vpxor, src, scratch.to_reg(), dst);
+                // Subtract the mask from the results of xor which will
+                // complete the two's complement for lanes which were negative.
+                self.asm
+                    .xmm_vpsub_rrr(dst.to_reg(), scratch.to_reg(), dst, OperandSize::S64);
+            }
+            _ => unimplemented!(),
+        }
         Ok(())
     }
 }
