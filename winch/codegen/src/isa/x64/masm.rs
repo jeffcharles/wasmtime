@@ -10,7 +10,8 @@ use crate::masm::{
     DivKind, Extend, ExtendKind, ExtractLaneKind, FloatCmpKind, HandleOverflowKind, Imm as I,
     IntCmpKind, LaneSelector, LoadKind, MacroAssembler as Masm, MulWideKind, OperandSize, RegImm,
     RemKind, ReplaceLaneKind, RmwOp, RoundingMode, ShiftKind, SplatKind, StoreKind, TrapCode,
-    TruncKind, VectorCompareKind, VectorEqualityKind, Zero, TRUSTED_FLAGS, UNTRUSTED_FLAGS,
+    TruncKind, V128AbsKind, VectorCompareKind, VectorEqualityKind, Zero, TRUSTED_FLAGS,
+    UNTRUSTED_FLAGS,
 };
 use crate::{
     abi::{self, align_to, calculate_frame_adjustment, LocalSlot},
@@ -2060,14 +2061,14 @@ impl Masm for MacroAssembler {
         Ok(())
     }
 
-    fn v128_abs(&mut self, src: Reg, dst: WritableReg, lane_width: OperandSize) -> Result<()> {
+    fn v128_abs(&mut self, src: Reg, dst: WritableReg, kind: V128AbsKind) -> Result<()> {
         self.ensure_has_avx()?;
 
-        match lane_width {
-            OperandSize::S8 | OperandSize::S16 | OperandSize::S32 => {
-                self.asm.xmm_vpabs_rr(src, dst, lane_width)
+        match kind {
+            V128AbsKind::I8x16 | V128AbsKind::I16x8 | V128AbsKind::I32x4 => {
+                self.asm.xmm_vpabs_rr(src, dst, kind.lane_size())
             }
-            OperandSize::S64 => {
+            V128AbsKind::I64x2 => {
                 let scratch = writable!(regs::scratch_xmm());
                 // Perform an arithmetic right shift of 31 bits. If the number
                 // is positive, this will result in all zeroes in the upper
@@ -2086,9 +2087,27 @@ impl Masm for MacroAssembler {
                 // Subtract the mask from the results of xor which will
                 // complete the two's complement for lanes which were negative.
                 self.asm
-                    .xmm_vpsub_rrr(dst.to_reg(), scratch.to_reg(), dst, OperandSize::S64);
+                    .xmm_vpsub_rrr(dst.to_reg(), scratch.to_reg(), dst, kind.lane_size());
             }
-            _ => unimplemented!(),
+            V128AbsKind::F32x4 => {
+                let scratch = writable!(regs::scratch_xmm());
+                // Create a mask of all ones.
+                self.asm.xmm_vpcmpeq_rrr(
+                    scratch,
+                    scratch.to_reg(),
+                    scratch.to_reg(),
+                    kind.lane_size(),
+                );
+                // Right shift the mask so each lane is a single zero followed
+                // by all ones.
+                self.asm
+                    .xmm_vpsrl_rri(scratch.to_reg(), scratch, 0x1, kind.lane_size());
+                // Use the mask to zero the sign bit in each lane which will
+                // make the float value positive.
+                self.asm
+                    .xmm_vandp_rrr(src, scratch.to_reg(), dst, kind.lane_size());
+            }
+            V128AbsKind::F64x2 => todo!(),
         }
         Ok(())
     }

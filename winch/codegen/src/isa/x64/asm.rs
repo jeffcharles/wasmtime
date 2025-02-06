@@ -2123,11 +2123,27 @@ impl Assembler {
         });
     }
 
-    /// Arithmetically (sign preserving) right shift on vector in `src` with
-    /// result written to `dst`.
+    /// Arithmetically (sign preserving) right shift on vector in `src` by
+    /// `imm` with result written to `dst`.
     pub fn xmm_vpsra_rri(&mut self, src: Reg, dst: WritableReg, imm: u32, size: OperandSize) {
         let op = match size {
             OperandSize::S32 => AvxOpcode::Vpsrad,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src.into(),
+            src2: XmmMemImm::unwrap_new(RegMemImm::imm(imm)),
+            dst: dst.to_reg().into(),
+        });
+    }
+
+    /// Logically right shift on vector in `src` by `imm` with
+    /// result written to `dst`.
+    pub fn xmm_vpsrl_rri(&mut self, src: Reg, dst: WritableReg, imm: u32, size: OperandSize) {
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vpsrld,
             _ => unimplemented!(),
         };
 
@@ -2144,6 +2160,22 @@ impl Assembler {
     pub fn xmm_vpsub_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
         let op = match size {
             OperandSize::S64 => AvxOpcode::Vpsubq,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.to_reg().into(),
+        });
+    }
+
+    /// Perform an `and` operation on vectors of floats in `src1` and `src2`
+    /// and put the results in `dst`.
+    pub fn xmm_vandp_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vandps,
             _ => unimplemented!(),
         };
 

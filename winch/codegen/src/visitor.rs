@@ -13,7 +13,7 @@ use crate::masm::{
     DivKind, Extend, ExtractLaneKind, FloatCmpKind, HandleOverflowKind, IntCmpKind, LoadKind,
     MacroAssembler, MemMoveDirection, MulWideKind, OperandSize, RegImm, RemKind, ReplaceLaneKind,
     RmwOp, RoundingMode, SPOffset, ShiftKind, Signed, SplatKind, SplatLoadKind, StoreKind,
-    TruncKind, V128LoadExtendKind, VectorCompareKind, VectorEqualityKind, Zero,
+    TruncKind, V128AbsKind, V128LoadExtendKind, VectorCompareKind, VectorEqualityKind, Zero,
 };
 
 use crate::reg::{writable, Reg};
@@ -441,6 +441,7 @@ macro_rules! def_unsupported {
     (emit I16x8Abs $($rest:tt)*) => {};
     (emit I32x4Abs $($rest:tt)*) => {};
     (emit I64x2Abs $($rest:tt)*) => {};
+    (emit F32x4Abs $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3733,28 +3734,35 @@ where
 
     fn visit_i8x16_abs(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
-            masm.v128_abs(reg, writable!(reg), OperandSize::S8)?;
+            masm.v128_abs(reg, writable!(reg), V128AbsKind::I8x16)?;
             Ok(TypedReg::new(WasmValType::V128, reg))
         })
     }
 
     fn visit_i16x8_abs(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
-            masm.v128_abs(reg, writable!(reg), OperandSize::S16)?;
+            masm.v128_abs(reg, writable!(reg), V128AbsKind::I16x8)?;
             Ok(TypedReg::new(WasmValType::V128, reg))
         })
     }
 
     fn visit_i32x4_abs(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
-            masm.v128_abs(reg, writable!(reg), OperandSize::S32)?;
+            masm.v128_abs(reg, writable!(reg), V128AbsKind::I32x4)?;
             Ok(TypedReg::new(WasmValType::V128, reg))
         })
     }
 
     fn visit_i64x2_abs(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
-            masm.v128_abs(reg, writable!(reg), OperandSize::S64)?;
+            masm.v128_abs(reg, writable!(reg), V128AbsKind::I64x2)?;
+            Ok(TypedReg::new(WasmValType::V128, reg))
+        })
+    }
+
+    fn visit_f32x4_abs(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_abs(reg, writable!(reg), V128AbsKind::F32x4)?;
             Ok(TypedReg::new(WasmValType::V128, reg))
         })
     }

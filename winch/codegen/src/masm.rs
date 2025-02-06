@@ -571,6 +571,35 @@ impl VectorCompareKind {
     }
 }
 
+/// Kinds of vector absolute operations supported by WebAssembly.
+#[derive(Copy, Debug, Clone, Eq, PartialEq)]
+pub(crate) enum V128AbsKind {
+    /// 8 bit integers.
+    I8x16,
+    /// 16 bit integers.
+    I16x8,
+    /// 32 bit integers.
+    I32x4,
+    /// 64 bit integers.
+    I64x2,
+    /// 32 bit floats.
+    F32x4,
+    /// 64 bit floats.
+    F64x2,
+}
+
+impl V128AbsKind {
+    /// The lane size to use.
+    pub(crate) fn lane_size(&self) -> OperandSize {
+        match self {
+            Self::I8x16 => OperandSize::S8,
+            Self::I16x8 => OperandSize::S16,
+            Self::I32x4 | Self::F32x4 => OperandSize::S32,
+            Self::I64x2 | Self::F64x2 => OperandSize::S64,
+        }
+    }
+}
+
 /// Operand size, in bits.
 #[derive(Copy, Debug, Clone, Eq, PartialEq)]
 pub(crate) enum OperandSize {
@@ -1691,5 +1720,5 @@ pub(crate) trait MacroAssembler {
     ) -> Result<()>;
 
     /// Perform an absolute operation on a vector.
-    fn v128_abs(&mut self, src: Reg, dst: WritableReg, lane_width: OperandSize) -> Result<()>;
+    fn v128_abs(&mut self, src: Reg, dst: WritableReg, kind: V128AbsKind) -> Result<()>;
 }
