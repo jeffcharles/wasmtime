@@ -2111,6 +2111,8 @@ impl Assembler {
     pub fn xmm_vpabs_rr(&mut self, src: Reg, dst: WritableReg, size: OperandSize) {
         let op = match size {
             OperandSize::S8 => AvxOpcode::Vpabsb,
+            OperandSize::S16 => AvxOpcode::Vpabsw,
+            OperandSize::S32 => AvxOpcode::Vpabsd,
             _ => unimplemented!(),
         };
 
