@@ -2089,7 +2089,7 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vpsub_rrr(dst.to_reg(), scratch.to_reg(), dst, kind.lane_size());
             }
-            V128AbsKind::F32x4 => {
+            V128AbsKind::F32x4 | V128AbsKind::F64x2 => {
                 let scratch = writable!(regs::scratch_xmm());
                 // Create a mask of all ones.
                 self.asm.xmm_vpcmpeq_rrr(
@@ -2107,7 +2107,6 @@ impl Masm for MacroAssembler {
                 self.asm
                     .xmm_vandp_rrr(src, scratch.to_reg(), dst, kind.lane_size());
             }
-            V128AbsKind::F64x2 => todo!(),
         }
         Ok(())
     }

@@ -442,6 +442,7 @@ macro_rules! def_unsupported {
     (emit I32x4Abs $($rest:tt)*) => {};
     (emit I64x2Abs $($rest:tt)*) => {};
     (emit F32x4Abs $($rest:tt)*) => {};
+    (emit F64x2Abs $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -3763,6 +3764,13 @@ where
     fn visit_f32x4_abs(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
             masm.v128_abs(reg, writable!(reg), V128AbsKind::F32x4)?;
+            Ok(TypedReg::new(WasmValType::V128, reg))
+        })
+    }
+
+    fn visit_f64x2_abs(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_abs(reg, writable!(reg), V128AbsKind::F64x2)?;
             Ok(TypedReg::new(WasmValType::V128, reg))
         })
     }
