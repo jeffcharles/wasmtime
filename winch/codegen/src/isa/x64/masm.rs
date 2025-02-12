@@ -2548,6 +2548,12 @@ impl Masm for MacroAssembler {
         self.asm.xmm_vex_rr(AvxOpcode::Vpmaddwd, lhs, rhs, dst);
         Ok(())
     }
+
+    fn v128_popcnt(&mut self, src: Reg, dst: WritableReg) -> Result<()> {
+        self.ensure_has_avx()?;
+        todo!();
+        Ok(())
+    }
 }
 
 impl MacroAssembler {

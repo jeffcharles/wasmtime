@@ -492,6 +492,7 @@ macro_rules! def_unsupported {
     (emit I32x4Bitmask $($rest:tt)*) => {};
     (emit I64x2Bitmask $($rest:tt)*) => {};
     (emit I32x4DotI16x8S $($rest:tt)*) => {};
+    (emit I8x16Popcnt $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -4132,6 +4133,13 @@ where
                 masm.v128_dot(dst, src, writable!(dst))?;
                 Ok(TypedReg::v128(dst))
             })
+    }
+
+    fn visit_i8x16_popcnt(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_popcnt(reg, writable!(reg))?;
+            Ok(TypedReg::v128(reg))
+        })
     }
 
     wasmparser::for_each_visit_simd_operator!(def_unsupported);
