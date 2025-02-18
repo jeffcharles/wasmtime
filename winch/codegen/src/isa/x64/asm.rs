@@ -264,6 +264,8 @@ pub(super) enum VcvtKind {
 
 /// Modes supported by `vround`.
 pub(crate) enum VroundMode {
+    /// Rounds toward positive infinity.
+    TowardInfinity,
     /// Rounds toward zero.
     TowardZero,
 }
@@ -2737,6 +2739,7 @@ impl Assembler {
         size: OperandSize,
     ) {
         let op = match size {
+            OperandSize::S32 => AvxOpcode::Vroundps,
             OperandSize::S64 => AvxOpcode::Vroundpd,
             _ => unimplemented!(),
         };
@@ -2746,6 +2749,7 @@ impl Assembler {
             src: src.into(),
             dst: dst.to_reg().into(),
             imm: match mode {
+                VroundMode::TowardInfinity => 2,
                 VroundMode::TowardZero => 3,
             },
         });

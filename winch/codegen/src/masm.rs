@@ -2013,4 +2013,7 @@ pub(crate) trait MacroAssembler {
     /// Lane-wise rounding average of vectors of integers in `lhs` and `rhs`
     /// and put the results in `dst`.
     fn v128_avgr(&mut self, lhs: Reg, rhs: Reg, dst: WritableReg, size: OperandSize) -> Result<()>;
+
+    /// Lane-wise ceiling of vectors of floats.
+    fn v128_ceil(&mut self, src: Reg, dst: WritableReg, size: OperandSize) -> Result<()>;
 }

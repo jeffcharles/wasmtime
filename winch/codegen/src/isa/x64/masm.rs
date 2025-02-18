@@ -2720,6 +2720,13 @@ impl Masm for MacroAssembler {
         self.asm.xmm_vpavg_rrr(lhs, rhs, dst, size);
         Ok(())
     }
+
+    fn v128_ceil(&mut self, src: Reg, dst: WritableReg, size: OperandSize) -> Result<()> {
+        self.ensure_has_avx()?;
+        self.asm
+            .xmm_vroundp_rri(src, dst, VroundMode::TowardInfinity, size);
+        Ok(())
+    }
 }
 
 impl MacroAssembler {
