@@ -94,14 +94,14 @@
 )
 (assert_return (invoke "as-f32x4.abs-operand") (v128.const i32x4 0x7fffffff 0x7fffffff 0x7fffffff 0x7fffffff)) ;; 1111 -> 0111
 
-;; (module (memory 1)
-;;   (data (offset (i32.const 0)) "\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA")
-;;   (data (offset (i32.const 16)) "\02\00\00\00\02\00\00\00\02\00\00\00\02\00\00\00")
-;;   (func (export "as-f32x4.min-operand") (result v128)
-;;     (f32x4.min (v128.load (i32.const 0)) (v128.load offset=16 (i32.const 1)))
-;;   )
-;; )
-;; (assert_return (invoke "as-f32x4.min-operand") (v128.const i32x4 0xaaaaaaaa 0xaaaaaaaa 0xaaaaaaaa 0xaaaaaaaa)) ;; signed 1010 < 0010
+(module (memory 1)
+  (data (offset (i32.const 0)) "\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA\AA")
+  (data (offset (i32.const 16)) "\02\00\00\00\02\00\00\00\02\00\00\00\02\00\00\00")
+  (func (export "as-f32x4.min-operand") (result v128)
+    (f32x4.min (v128.load (i32.const 0)) (v128.load offset=16 (i32.const 1)))
+  )
+)
+(assert_return (invoke "as-f32x4.min-operand") (v128.const i32x4 0xaaaaaaaa 0xaaaaaaaa 0xaaaaaaaa 0xaaaaaaaa)) ;; signed 1010 < 0010
 
 (module (memory 1)
   (data (offset (i32.const 0))  "\00\00\00\43\00\00\80\3f\66\66\e6\3f\00\00\80\bf")  ;; 128 1.0 1.8 -1

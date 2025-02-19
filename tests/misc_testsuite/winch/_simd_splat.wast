@@ -277,8 +277,8 @@
     (f32x4.abs (f32x4.splat (local.get 0))))
 
   ;; Floating-point min
-;;   (func (export "as-f32x4_min-operands") (param f32 f32) (result v128)
-;;     (f32x4.min (f32x4.splat (local.get 0)) (f32x4.splat (local.get 1))))
+  (func (export "as-f32x4_min-operands") (param f32 f32) (result v128)
+    (f32x4.min (f32x4.splat (local.get 0)) (f32x4.splat (local.get 1))))
 
   ;; Floating-point arithmetic
 ;;   (func (export "as-f32x4_div-operands") (param f32 f32) (result v128)
@@ -337,7 +337,7 @@
 (assert_return (invoke "as-f64x2_eq-operands" (f64.const +0.0) (f64.const -0.0)) (v128.const i64x2 -1 -1))
 
 (assert_return (invoke "as-f32x4_abs-operand" (f32.const -1.125)) (v128.const f32x4 1.125 1.125 1.125 1.125))
-;; (assert_return (invoke "as-f32x4_min-operands" (f32.const 0.25) (f32.const 1e-38)) (v128.const f32x4 1e-38 1e-38 1e-38 1e-38))
+(assert_return (invoke "as-f32x4_min-operands" (f32.const 0.25) (f32.const 1e-38)) (v128.const f32x4 1e-38 1e-38 1e-38 1e-38))
 ;; (assert_return (invoke "as-f32x4_div-operands" (f32.const 1.0) (f32.const 8.0)) (v128.const f32x4 0.125 0.125 0.125 0.125))
 
 (assert_return (invoke "as-f32x4_convert_s_i32x4-operand" (i32.const 12345)) (v128.const f32x4 12345.0 12345.0 12345.0 12345.0))
