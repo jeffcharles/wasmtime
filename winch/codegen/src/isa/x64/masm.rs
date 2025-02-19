@@ -2569,7 +2569,9 @@ impl Masm for MacroAssembler {
                 };
                 self.asm.xmm_vex_rr(op, src1, src2, dst);
             }
-            V128MinKind::F32x4 => self.v128_float_min(src1, src2, dst, kind.lane_size()),
+            V128MinKind::F32x4 | V128MinKind::F64x2 => {
+                self.v128_float_min(src1, src2, dst, kind.lane_size())
+            }
         }
 
         Ok(())

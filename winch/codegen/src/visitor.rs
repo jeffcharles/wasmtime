@@ -529,6 +529,7 @@ macro_rules! def_unsupported {
     (emit I8x16AvgrU $($rest:tt)*) => {};
     (emit I16x8AvgrU $($rest:tt)*) => {};
     (emit F32x4Min $($rest:tt)*) => {};
+    (emit F64x2Min $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -4351,6 +4352,14 @@ where
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
                 masm.v128_min(dst, src, writable!(dst), V128MinKind::F32x4)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_f64x2_min(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
+                masm.v128_min(dst, src, writable!(dst), V128MinKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }

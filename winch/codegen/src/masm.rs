@@ -42,6 +42,8 @@ impl RemKind {
 pub(crate) enum V128MinKind {
     /// 4 lanes of 32-bit floats.
     F32x4,
+    /// 2 lanes of 64-bit floats.
+    F64x2,
     /// 16 lanes of signed 8-bit integers.
     I8x16S,
     /// 16 lanes of unsigned 8-bit integers.
@@ -61,6 +63,7 @@ impl V128MinKind {
     pub(crate) fn lane_size(&self) -> OperandSize {
         match self {
             Self::F32x4 | Self::I32x4S | Self::I32x4U => OperandSize::S32,
+            Self::F64x2 => OperandSize::S64,
             Self::I8x16S | Self::I8x16U => OperandSize::S8,
             Self::I16x8S | Self::I16x8U => OperandSize::S16,
         }

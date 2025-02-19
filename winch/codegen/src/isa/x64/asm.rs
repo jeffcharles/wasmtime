@@ -2678,6 +2678,7 @@ impl Assembler {
     pub fn xmm_vandnp_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
         let op = match size {
             OperandSize::S32 => AvxOpcode::Vandnps,
+            OperandSize::S64 => AvxOpcode::Vandnpd,
             _ => unimplemented!(),
         };
 
@@ -2857,6 +2858,7 @@ impl Assembler {
     pub fn xmm_vorp_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
         let op = match size {
             OperandSize::S32 => AvxOpcode::Vorps,
+            OperandSize::S64 => AvxOpcode::Vorpd,
             _ => unimplemented!(),
         };
 
