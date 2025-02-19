@@ -264,8 +264,10 @@ pub(super) enum VcvtKind {
 
 /// Modes supported by `vround`.
 pub(crate) enum VroundMode {
+    /// Rounds toward negative infinity.
+    TowardNegativeInfinity,
     /// Rounds toward positive infinity.
-    TowardInfinity,
+    TowardPositiveInfinity,
     /// Rounds toward zero.
     TowardZero,
 }
@@ -2749,7 +2751,8 @@ impl Assembler {
             src: src.into(),
             dst: dst.to_reg().into(),
             imm: match mode {
-                VroundMode::TowardInfinity => 2,
+                VroundMode::TowardNegativeInfinity => 1,
+                VroundMode::TowardPositiveInfinity => 2,
                 VroundMode::TowardZero => 3,
             },
         });

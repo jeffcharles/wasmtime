@@ -2016,4 +2016,7 @@ pub(crate) trait MacroAssembler {
 
     /// Lane-wise ceiling of vectors of floats.
     fn v128_ceil(&mut self, src: Reg, dst: WritableReg, size: OperandSize) -> Result<()>;
+
+    /// Lane-wise flooring of vectors of floats.
+    fn v128_floor(&mut self, src: Reg, dst: WritableReg, size: OperandSize) -> Result<()>;
 }

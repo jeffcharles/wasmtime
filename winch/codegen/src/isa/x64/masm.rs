@@ -2724,7 +2724,14 @@ impl Masm for MacroAssembler {
     fn v128_ceil(&mut self, src: Reg, dst: WritableReg, size: OperandSize) -> Result<()> {
         self.ensure_has_avx()?;
         self.asm
-            .xmm_vroundp_rri(src, dst, VroundMode::TowardInfinity, size);
+            .xmm_vroundp_rri(src, dst, VroundMode::TowardPositiveInfinity, size);
+        Ok(())
+    }
+
+    fn v128_floor(&mut self, src: Reg, dst: WritableReg, size: OperandSize) -> Result<()> {
+        self.ensure_has_avx()?;
+        self.asm
+            .xmm_vroundp_rri(src, dst, VroundMode::TowardNegativeInfinity, size);
         Ok(())
     }
 }

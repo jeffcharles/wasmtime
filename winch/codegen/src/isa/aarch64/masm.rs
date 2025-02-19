@@ -1260,6 +1260,10 @@ impl Masm for MacroAssembler {
     fn v128_ceil(&mut self, _src: Reg, _dst: WritableReg, _size: OperandSize) -> Result<()> {
         bail!(CodeGenError::unimplemented_masm_instruction())
     }
+
+    fn v128_floor(&mut self, _src: Reg, _dst: WritableReg, _size: OperandSize) -> Result<()> {
+        bail!(CodeGenError::unimplemented_masm_instruction())
+    }
 }
 
 impl MacroAssembler {
