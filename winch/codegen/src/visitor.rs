@@ -531,6 +531,7 @@ macro_rules! def_unsupported {
     (emit F32x4Min $($rest:tt)*) => {};
     (emit F64x2Min $($rest:tt)*) => {};
     (emit F32x4Max $($rest:tt)*) => {};
+    (emit F64x2Max $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -4369,6 +4370,14 @@ where
         self.context
             .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
                 masm.v128_max(dst, src, writable!(dst), V128MaxKind::F32x4)?;
+                Ok(TypedReg::v128(dst))
+            })
+    }
+
+    fn visit_f64x2_max(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S64, |masm, dst, src, _size| {
+                masm.v128_max(dst, src, writable!(dst), V128MaxKind::F64x2)?;
                 Ok(TypedReg::v128(dst))
             })
     }

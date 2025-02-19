@@ -2608,7 +2608,7 @@ impl Masm for MacroAssembler {
                 };
                 self.asm.xmm_vex_rr(op, src1, src2, dst);
             }
-            V128MaxKind::F32x4 => self.v128_float_min_max(
+            V128MaxKind::F32x4 | V128MaxKind::F64x2 => self.v128_float_min_max(
                 src1,
                 src2,
                 dst,
@@ -3110,8 +3110,8 @@ impl MacroAssembler {
     ) where
         F: Fn(&mut Assembler, Reg, Reg, WritableReg, OperandSize),
     {
-        // x64 does not have a single instruction that is commutative
-        // when a NaN operand is involved.
+        // x64 does not have a single min or max instruction that is commutative
+        // when a NaN operand is involved so we have to compensate.
         let scratch = writable!(regs::scratch_xmm());
         // Perform two comparison operations with the operands swapped and OR
         // the result to propagate any NaNs.
