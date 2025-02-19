@@ -2569,9 +2569,13 @@ impl Masm for MacroAssembler {
                 };
                 self.asm.xmm_vex_rr(op, src1, src2, dst);
             }
-            V128MinKind::F32x4 | V128MinKind::F64x2 => {
-                self.v128_float_min(src1, src2, dst, kind.lane_size())
-            }
+            V128MinKind::F32x4 | V128MinKind::F64x2 => self.v128_float_min_max(
+                src1,
+                src2,
+                dst,
+                kind.lane_size(),
+                |asm, src1, src2, dst, size| asm.xmm_vminp_rrr(src1, src2, dst, size),
+            ),
         }
 
         Ok(())
@@ -2586,15 +2590,32 @@ impl Masm for MacroAssembler {
     ) -> Result<()> {
         self.ensure_has_avx()?;
 
-        let op = match kind {
-            V128MaxKind::I8x16S => AvxOpcode::Vpmaxsb,
-            V128MaxKind::I8x16U => AvxOpcode::Vpmaxub,
-            V128MaxKind::I16x8S => AvxOpcode::Vpmaxsw,
-            V128MaxKind::I16x8U => AvxOpcode::Vpmaxuw,
-            V128MaxKind::I32x4S => AvxOpcode::Vpmaxsd,
-            V128MaxKind::I32x4U => AvxOpcode::Vpmaxud,
-        };
-        self.asm.xmm_vex_rr(op, src1, src2, dst);
+        match kind {
+            V128MaxKind::I8x16S
+            | V128MaxKind::I8x16U
+            | V128MaxKind::I16x8S
+            | V128MaxKind::I16x8U
+            | V128MaxKind::I32x4S
+            | V128MaxKind::I32x4U => {
+                let op = match kind {
+                    V128MaxKind::I8x16S => AvxOpcode::Vpmaxsb,
+                    V128MaxKind::I8x16U => AvxOpcode::Vpmaxub,
+                    V128MaxKind::I16x8S => AvxOpcode::Vpmaxsw,
+                    V128MaxKind::I16x8U => AvxOpcode::Vpmaxuw,
+                    V128MaxKind::I32x4S => AvxOpcode::Vpmaxsd,
+                    V128MaxKind::I32x4U => AvxOpcode::Vpmaxud,
+                    _ => unreachable!(),
+                };
+                self.asm.xmm_vex_rr(op, src1, src2, dst);
+            }
+            V128MaxKind::F32x4 => self.v128_float_min_max(
+                src1,
+                src2,
+                dst,
+                kind.lane_size(),
+                |asm, src1, src2, dst, size| asm.xmm_vmaxp_rrr(src1, src2, dst, size),
+            ),
+        }
         Ok(())
     }
 
@@ -3079,14 +3100,23 @@ impl MacroAssembler {
         );
     }
 
-    fn v128_float_min(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
+    fn v128_float_min_max<F>(
+        &mut self,
+        src1: Reg,
+        src2: Reg,
+        dst: WritableReg,
+        size: OperandSize,
+        cmp_op: F,
+    ) where
+        F: Fn(&mut Assembler, Reg, Reg, WritableReg, OperandSize),
+    {
         // x64 does not have a single instruction that is commutative
         // when a NaN operand is involved.
         let scratch = writable!(regs::scratch_xmm());
-        // Perform two min operations with the operands swapped and OR
+        // Perform two comparison operations with the operands swapped and OR
         // the result to propagate any NaNs.
-        self.asm.xmm_vminp_rrr(src1, src2, scratch, size);
-        self.asm.xmm_vminp_rrr(src2, src1, dst, size);
+        cmp_op(&mut self.asm, src1, src2, scratch, size);
+        cmp_op(&mut self.asm, src2, src1, dst, size);
         self.asm
             .xmm_vorp_rrr(dst.to_reg(), scratch.to_reg(), writable!(src2), size);
         // Set lanes to NaN values to 1.
