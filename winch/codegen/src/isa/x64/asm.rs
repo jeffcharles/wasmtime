@@ -244,6 +244,9 @@ pub(super) enum VcmpKind {
     Lt,
     /// Less than or equal comparison.
     Le,
+    /// Unordered comparison. Sets result to all 1s if either source operand is
+    /// NaN.
+    Unord,
 }
 
 /// Kinds of conversions supported by `vcvt`.
@@ -2359,6 +2362,7 @@ impl Assembler {
                 VcmpKind::Eq => 0,
                 VcmpKind::Lt => 1,
                 VcmpKind::Le => 2,
+                VcmpKind::Unord => 3,
                 VcmpKind::Ne => 4,
             },
         });
@@ -2669,6 +2673,22 @@ impl Assembler {
         });
     }
 
+    /// Perform an `and not` operation on vectors of floats in `src1` and
+    /// `src2` and put the results in `dst`.
+    pub fn xmm_vandnp_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vandnps,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.to_reg().into(),
+        });
+    }
+
     /// Perform a max operation across two vectors of floats and put the
     /// results in `dst`.
     pub fn xmm_vmaxp_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
@@ -2821,6 +2841,22 @@ impl Assembler {
         let op = match size {
             OperandSize::S8 => AvxOpcode::Vpavgb,
             OperandSize::S16 => AvxOpcode::Vpavgw,
+            _ => unimplemented!(),
+        };
+
+        self.emit(Inst::XmmRmiRVex {
+            op,
+            src1: src1.into(),
+            src2: src2.into(),
+            dst: dst.to_reg().into(),
+        });
+    }
+
+    /// Perform an or operation for the vectors of floats in `src1` and `src2`
+    /// and put the results in `dst`.
+    pub fn xmm_vorp_rrr(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
+        let op = match size {
+            OperandSize::S32 => AvxOpcode::Vorps,
             _ => unimplemented!(),
         };
 

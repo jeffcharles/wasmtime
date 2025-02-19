@@ -2551,15 +2551,27 @@ impl Masm for MacroAssembler {
     ) -> Result<()> {
         self.ensure_has_avx()?;
 
-        let op = match kind {
-            V128MinKind::I8x16S => AvxOpcode::Vpminsb,
-            V128MinKind::I8x16U => AvxOpcode::Vpminub,
-            V128MinKind::I16x8S => AvxOpcode::Vpminsw,
-            V128MinKind::I16x8U => AvxOpcode::Vpminuw,
-            V128MinKind::I32x4S => AvxOpcode::Vpminsd,
-            V128MinKind::I32x4U => AvxOpcode::Vpminud,
-        };
-        self.asm.xmm_vex_rr(op, src1, src2, dst);
+        match kind {
+            V128MinKind::I8x16S
+            | V128MinKind::I8x16U
+            | V128MinKind::I16x8S
+            | V128MinKind::I16x8U
+            | V128MinKind::I32x4S
+            | V128MinKind::I32x4U => {
+                let op = match kind {
+                    V128MinKind::I8x16S => AvxOpcode::Vpminsb,
+                    V128MinKind::I8x16U => AvxOpcode::Vpminub,
+                    V128MinKind::I16x8S => AvxOpcode::Vpminsw,
+                    V128MinKind::I16x8U => AvxOpcode::Vpminuw,
+                    V128MinKind::I32x4S => AvxOpcode::Vpminsd,
+                    V128MinKind::I32x4U => AvxOpcode::Vpminud,
+                    _ => unreachable!(),
+                };
+                self.asm.xmm_vex_rr(op, src1, src2, dst);
+            }
+            V128MinKind::F32x4 => self.v128_float_min(src1, src2, dst, kind.lane_size()),
+        }
+
         Ok(())
     }
 
@@ -3063,5 +3075,27 @@ impl MacroAssembler {
             0b10_00_10_00,
             dst_lane_size,
         );
+    }
+
+    fn v128_float_min(&mut self, src1: Reg, src2: Reg, dst: WritableReg, size: OperandSize) {
+        // x64 does not have a single instruction that is commutative
+        // when a NaN operand is involved.
+        let scratch = writable!(regs::scratch_xmm());
+        // Perform two min operations with the operands swapped and OR
+        // the result to propagate any NaNs.
+        self.asm.xmm_vminp_rrr(src1, src2, scratch, size);
+        self.asm.xmm_vminp_rrr(src2, src1, dst, size);
+        self.asm
+            .xmm_vorp_rrr(dst.to_reg(), scratch.to_reg(), writable!(src2), size);
+        // Set lanes to NaN values to 1.
+        self.asm
+            .xmm_vcmpp_rrr(writable!(src2), dst.to_reg(), src2, size, VcmpKind::Unord);
+        // Capture the NaN lanes.
+        self.asm.xmm_vorp_rrr(dst.to_reg(), src2, dst, size);
+        // Canonicalize the NaN representation by shifting the NaN
+        // detection mask right by 10 bits and then performing an AND
+        // NOT with the mask.
+        self.asm.xmm_vpsrl_rr(src2, writable!(src2), 0xA, size);
+        self.asm.xmm_vandnp_rrr(dst.to_reg(), src2, dst, size);
     }
 }

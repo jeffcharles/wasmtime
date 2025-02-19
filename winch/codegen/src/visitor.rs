@@ -528,6 +528,7 @@ macro_rules! def_unsupported {
     (emit I8x16Popcnt $($rest:tt)*) => {};
     (emit I8x16AvgrU $($rest:tt)*) => {};
     (emit I16x8AvgrU $($rest:tt)*) => {};
+    (emit F32x4Min $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -4344,6 +4345,14 @@ where
             masm.v128_extadd_pairwise(op, writable!(op), V128ExtAddKind::I16x8U)?;
             Ok(TypedReg::v128(op))
         })
+    }
+
+    fn visit_f32x4_min(&mut self) -> Self::Output {
+        self.context
+            .binop(self.masm, OperandSize::S32, |masm, dst, src, _size| {
+                masm.v128_min(dst, src, writable!(dst), V128MinKind::F32x4)?;
+                Ok(TypedReg::v128(dst))
+            })
     }
 
     wasmparser::for_each_visit_simd_operator!(def_unsupported);

@@ -40,6 +40,8 @@ impl RemKind {
 
 /// Kinds of vector min operation supported by WebAssembly.
 pub(crate) enum V128MinKind {
+    /// 4 lanes of 32-bit floats.
+    F32x4,
     /// 16 lanes of signed 8-bit integers.
     I8x16S,
     /// 16 lanes of unsigned 8-bit integers.
@@ -52,6 +54,17 @@ pub(crate) enum V128MinKind {
     I32x4S,
     /// 4 lanes of unsigned 32-bit integers.
     I32x4U,
+}
+
+impl V128MinKind {
+    /// The size of each lane.
+    pub(crate) fn lane_size(&self) -> OperandSize {
+        match self {
+            Self::F32x4 | Self::I32x4S | Self::I32x4U => OperandSize::S32,
+            Self::I8x16S | Self::I8x16U => OperandSize::S8,
+            Self::I16x8S | Self::I16x8U => OperandSize::S16,
+        }
+    }
 }
 
 /// Kinds of vector max operation supported by WebAssembly.
