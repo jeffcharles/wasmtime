@@ -2730,7 +2730,7 @@ impl Assembler {
         });
     }
 
-    // Round a vector of floats toward 0.
+    // Round a vector of floats.
     pub fn xmm_vroundp_rri(
         &mut self,
         src: Reg,

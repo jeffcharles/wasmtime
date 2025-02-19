@@ -528,6 +528,7 @@ macro_rules! def_unsupported {
     (emit I8x16AvgrU $($rest:tt)*) => {};
     (emit I16x8AvgrU $($rest:tt)*) => {};
     (emit F32x4Ceil $($rest:tt)*) => {};
+    (emit F64x2Ceil $($rest:tt)*) => {};
 
     (emit $unsupported:tt $($rest:tt)*) => {$($rest)*};
 }
@@ -4402,6 +4403,13 @@ where
     fn visit_f32x4_ceil(&mut self) -> Self::Output {
         self.context.unop(self.masm, |masm, reg| {
             masm.v128_ceil(reg, writable!(reg), OperandSize::S32)?;
+            Ok(TypedReg::v128(reg))
+        })
+    }
+
+    fn visit_f64x2_ceil(&mut self) -> Self::Output {
+        self.context.unop(self.masm, |masm, reg| {
+            masm.v128_ceil(reg, writable!(reg), OperandSize::S64)?;
             Ok(TypedReg::v128(reg))
         })
     }
