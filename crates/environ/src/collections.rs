@@ -17,10 +17,10 @@ pub use wasmtime_core::alloc::{TryClone, TryNew, Vec, try_new};
 // collections would only be fallible in this module and would handle OOM. We're
 // in a bit of a transition period though.
 pub mod oom_abort {
-    #[cfg(not(feature = "std"))]
+    // #[cfg(not(feature = "std"))]
     pub use hashbrown::{hash_map, hash_set};
-    #[cfg(feature = "std")]
-    pub use std::collections::{hash_map, hash_set};
+    // #[cfg(feature = "std")]
+    // pub use std::collections::{hash_map, hash_set};
 
     pub use self::hash_map::HashMap;
     pub use self::hash_set::HashSet;
